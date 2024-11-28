@@ -41,7 +41,7 @@
         }
     },
     "engines": {
-        "node": "23.3.0"
+        "node": "23.1.0"
     },
     "dependencies": {
         "@coinbase/coinbase-sdk": "^0.10.0",
