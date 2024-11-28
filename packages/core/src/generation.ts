@@ -457,7 +457,7 @@ export async function generateShouldRespond({
     let retryDelay = 1000;
     while (true) {
         try {
-            elizaLogger.debug(
+            elizaLogger.log(
                 "Attempting to generate text with context:",
                 context
             );
@@ -467,13 +467,13 @@ export async function generateShouldRespond({
                 modelClass,
             });
 
-            elizaLogger.debug("Received response from generateText:", response);
+            elizaLogger.log("Received response from generateText:", response);
             const parsedResponse = parseShouldRespondFromText(response.trim());
             if (parsedResponse) {
-                elizaLogger.debug("Parsed response:", parsedResponse);
+                elizaLogger.log("Parsed response:", parsedResponse);
                 return parsedResponse;
             } else {
-                elizaLogger.debug("generateShouldRespond no response");
+                elizaLogger.log("generateShouldRespond no response");
             }
         } catch (error) {
             elizaLogger.error("Error in generateShouldRespond:", error);
@@ -720,6 +720,58 @@ export async function generateMessageResponse({
     while (true) {
         try {
             elizaLogger.log("Generating message response..");
+
+            const response = await generateText({
+                runtime,
+                context,
+                modelClass,
+            });
+            // try parsing the response as JSON, if null then try again
+            const parsedContent = parseJSONObjectFromText(response) as Content;
+            if (!parsedContent) {
+                elizaLogger.debug("parsedContent is null, retrying");
+                continue;
+            }
+
+            return parsedContent;
+        } catch (error) {
+            elizaLogger.error("ERROR:", error);
+            // wait for 2 seconds
+            retryLength *= 2;
+            await new Promise((resolve) => setTimeout(resolve, retryLength));
+            elizaLogger.debug("Retrying...");
+        }
+    }
+}
+
+/**
+ * Send a message to the model for generateText.
+ * @param opts - The options for the generateText request.
+ * @param opts.context The context of the message to be completed.
+ * @param opts.stop A list of strings to stop the generateText at.
+ * @param opts.model The model to use for generateText.
+ * @param opts.frequency_penalty The frequency penalty to apply to the generateText.
+ * @param opts.presence_penalty The presence penalty to apply to the generateText.
+ * @param opts.temperature The temperature to apply to the generateText.
+ * @param opts.max_context_length The maximum length of the context to apply to the generateText.
+ * @returns The completed message.
+ */
+export async function generateMessageAndImageResponse({
+    runtime,
+    context,
+    modelClass,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: string;
+}): Promise<Content> {
+    const max_context_length =
+        models[runtime.modelProvider].settings.maxInputTokens;
+    context = trimTokens(context, max_context_length, "gpt-4o");
+    let retryLength = 1000; // exponential backoff
+    while (true) {
+        try {
+            elizaLogger.log("Generating message and image response..");
 
             const response = await generateText({
                 runtime,

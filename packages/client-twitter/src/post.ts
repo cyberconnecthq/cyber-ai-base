@@ -203,19 +203,19 @@ export class TwitterPostClient {
             try {
                 elizaLogger.log(`Posting new tweet:\n ${content}`);
 
-                console.log("----------post image-----------");
+                // console.log("----------post image-----------");
 
-                const image =
-                    "https://pbs.twimg.com/media/GdceemhbQAAfF63?format=jpg&name=large";
-                const response = await fetch(image);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const buffer = Buffer.from(await response.arrayBuffer());
+                // const image =
+                //     "https://pbs.twimg.com/media/GdceemhbQAAfF63?format=jpg&name=large";
+                // const response = await fetch(image);
+                // if (!response.ok) {
+                //     throw new Error(`HTTP error! status: ${response.status}`);
+                // }
+                // const buffer = Buffer.from(await response.arrayBuffer());
 
-                await this.client.twitterClient.sendTweetWithMedia(content, [
-                    buffer,
-                ]);
+                // await this.client.twitterClient.sendTweetWithMedia(content, [
+                //     buffer,
+                // ]);
 
                 const result = await this.client.requestQueue.add(
                     async () =>

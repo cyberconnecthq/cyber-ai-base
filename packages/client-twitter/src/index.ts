@@ -35,6 +35,8 @@ export const TwitterClientInterface: Client = {
 
         await manager.interaction.start();
 
+        // await manager.search.onReady();
+
         return manager;
     },
     async stop(_runtime: IAgentRuntime) {

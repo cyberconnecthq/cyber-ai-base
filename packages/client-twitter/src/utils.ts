@@ -168,46 +168,68 @@ export async function sendTweet(
     content: Content,
     roomId: UUID,
     twitterUsername: string,
-    inReplyTo: string
+    inReplyTo: string,
+    shouldRespondWithImage: boolean
 ): Promise<Memory[]> {
     const tweetChunks = splitTweetContent(content.text);
     const sentTweets: Tweet[] = [];
     let previousTweetId = inReplyTo;
 
-    for (const chunk of tweetChunks) {
-        const result = await client.requestQueue.add(
-            async () =>
-                await client.twitterClient.sendTweet(
-                    chunk.trim(),
-                    previousTweetId
-                )
-        );
-        const body = await result.json();
+    for (const [index, chunk] of tweetChunks.entries()) {
+        let body, result;
+        console.log("----------final function reply with image-----------");
+        const image =
+            "https://pbs.twimg.com/media/GdceemhbQAAfF63?format=jpg&name=large";
+        const response = await fetch(image);
+        console.log(response);
+        if (!response.ok) {
+            continue;
+        }
+        const buffer = Buffer.from(await response.arrayBuffer());
+        if (index === tweetChunks.length - 1) {
+            result = await client.requestQueue.add(
+                async () =>
+                    await client.twitterClient.sendTweetWithMedia(
+                        chunk.trim(),
+                        [buffer],
+                        previousTweetId
+                    )
+            );
+        } else {
+            result = await client.requestQueue.add(
+                async () =>
+                    await client.twitterClient.sendTweet(
+                        chunk.trim(),
+                        previousTweetId
+                    )
+            );
+        }
+        body = await result.json();
 
         // if we have a response
         if (body?.data?.create_tweet?.tweet_results?.result) {
-          // Parse the response
-          const tweetResult = body.data.create_tweet.tweet_results.result;
-          const finalTweet: Tweet = {
-              id: tweetResult.rest_id,
-              text: tweetResult.legacy.full_text,
-              conversationId: tweetResult.legacy.conversation_id_str,
-              //createdAt:
-              timestamp: tweetResult.timestamp * 1000,
-              userId: tweetResult.legacy.user_id_str,
-              inReplyToStatusId: tweetResult.legacy.in_reply_to_status_id_str,
-              permanentUrl: `https://twitter.com/${twitterUsername}/status/${tweetResult.rest_id}`,
-              hashtags: [],
-              mentions: [],
-              photos: [],
-              thread: [],
-              urls: [],
-              videos: [],
-          };
-          sentTweets.push(finalTweet);
-          previousTweetId = finalTweet.id;
+            // Parse the response
+            const tweetResult = body.data.create_tweet.tweet_results.result;
+            const finalTweet: Tweet = {
+                id: tweetResult.rest_id,
+                text: tweetResult.legacy.full_text,
+                conversationId: tweetResult.legacy.conversation_id_str,
+                //createdAt:
+                timestamp: tweetResult.timestamp * 1000,
+                userId: tweetResult.legacy.user_id_str,
+                inReplyToStatusId: tweetResult.legacy.in_reply_to_status_id_str,
+                permanentUrl: `https://twitter.com/${twitterUsername}/status/${tweetResult.rest_id}`,
+                hashtags: [],
+                mentions: [],
+                photos: [],
+                thread: [],
+                urls: [],
+                videos: [],
+            };
+            sentTweets.push(finalTweet);
+            previousTweetId = finalTweet.id;
         } else {
-          console.error("Error sending chunk", chunk, "repsonse:", body);
+            console.error("Error sending chunk", chunk, "repsonse:", body);
         }
 
         // Wait a bit between tweets to avoid rate limiting issues

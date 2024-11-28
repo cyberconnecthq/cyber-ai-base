@@ -47,9 +47,7 @@ export class TwitterSearchClient extends ClientBase {
 
     constructor(runtime: IAgentRuntime) {
         // Initialize the client and pass an optional callback to be called when the client is ready
-        super({
-            runtime,
-        });
+        super(runtime);
     }
 
     async onReady() {
@@ -231,7 +229,6 @@ export class TwitterSearchClient extends ClientBase {
                     .getService<IImageDescriptionService>(
                         ServiceType.IMAGE_DESCRIPTION
                     )
-                    .getInstance()
                     .describeImage(photo.url);
                 imageDescriptions.push(description);
             }

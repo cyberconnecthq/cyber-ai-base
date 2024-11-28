@@ -297,9 +297,9 @@ export interface State {
     formattedConversation?: string;
 
     /** Optional formatted knowledge */
-    knowledge?: string,
+    knowledge?: string;
     /** Optional knowledge data */
-    knowledgeData?: KnowledgeItem[],
+    knowledgeData?: KnowledgeItem[];
 
     /** Additional dynamic properties */
     [key: string]: unknown;
@@ -590,6 +590,7 @@ export enum Clients {
     DIRECT = "direct",
     TWITTER = "twitter",
     TELEGRAM = "telegram",
+    FARCASTER = "farcaster",
 }
 /**
  * Configuration for an agent character

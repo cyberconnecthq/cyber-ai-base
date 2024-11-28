@@ -82,6 +82,34 @@ Thread of Tweets You Are Replying To:
 # INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
 ` + shouldRespondFooter;
 
+export const twitterShouldRespondWithImageTemplate =
+    `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message with an image and participate in the conversation. Do not comment. Just respond with "true" or "false".
+
+Response options are RESPOND, IGNORE and STOP .
+
+{{agentName}} should respond to messages that are directed at them, or participate in conversations that are interesting or relevant to their background, IGNORE messages that are irrelevant to them, and should STOP if the conversation is concluded.
+
+If users want {{agentName}} to generate/draw an image/picture for them should RESPOND.
+{{agentName}} is in a room with other users and wants to be conversational, but not annoying.
+{{agentName}} should RESPOND to messages that are directed at them, or participate in conversations that are interesting or relevant to their background.
+If a message is not interesting or relevant, {{agentName}} should IGNORE.
+Unless directly RESPONDing to a user, {{agentName}} should IGNORE messages that are very short or do not contain much information.
+If a user asks {{agentName}} to stop talking, {{agentName}} should STOP.
+If {{agentName}} concludes a conversation and isn't part of the conversation anymore, {{agentName}} should STOP.
+
+{{recentPosts}}
+
+IMPORTANT: {{agentName}} (aka @{{twitterUserName}}) is particularly sensitive about being annoying, so if there is any doubt, it is better to IGNORE than to RESPOND.
+
+{{currentPost}}
+
+Thread of Tweets You Are Replying To:
+
+{{formattedConversation}}
+
+# INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
+` + shouldRespondFooter;
+
 export class TwitterInteractionClient {
     client: ClientBase;
     runtime: IAgentRuntime;
@@ -122,9 +150,10 @@ export class TwitterInteractionClient {
             uniqueTweetCandidates
                 .sort((a, b) => a.id.localeCompare(b.id))
                 .filter((tweet) => tweet.userId !== this.client.profile.id);
-
             // for each tweet candidate, handle the tweet
             for (const tweet of uniqueTweetCandidates) {
+                // console.log(tweet);
+                // console.log(this.client.lastCheckedTweetId);
                 if (
                     !this.client.lastCheckedTweetId ||
                     BigInt(tweet.id) > this.client.lastCheckedTweetId
@@ -292,11 +321,26 @@ export class TwitterInteractionClient {
                 twitterShouldRespondTemplate,
         });
 
+        const shouldRespondWithImageContext = composeContext({
+            state,
+            template: twitterShouldRespondWithImageTemplate,
+        });
+
         const shouldRespond = await generateShouldRespond({
             runtime: this.runtime,
             context: shouldRespondContext,
             modelClass: ModelClass.MEDIUM,
         });
+
+        const shouldRespondWithImage = await generateShouldRespond({
+            runtime: this.runtime,
+            context: shouldRespondWithImageContext,
+            modelClass: ModelClass.MEDIUM,
+        });
+
+        console.log("----------shouldRespondWithImage-----------");
+        console.log(`----------${shouldRespondWithImage}-----------`);
+        console.log("----------shouldRespondWithImage-----------");
 
         // Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
         if (shouldRespond !== "RESPOND") {
@@ -331,6 +375,7 @@ export class TwitterInteractionClient {
         response.text = removeQuotes(response.text);
 
         if (response.text) {
+            console.log("123123i1231ug1kgk1gdk1gdkw1gk");
             try {
                 const callback: HandlerCallback = async (response: Content) => {
                     const memories = await sendTweet(
@@ -338,7 +383,8 @@ export class TwitterInteractionClient {
                         response,
                         message.roomId,
                         this.runtime.getSetting("TWITTER_USERNAME"),
-                        tweet.id
+                        tweet.id,
+                        shouldRespondWithImage === "RESPOND" ? true : false
                     );
                     return memories;
                 };
