@@ -383,16 +383,9 @@ const rl = readline.createInterface({
     output: process.stdout,
 });
 
-rl.on("SIGINT", () => {
-    rl.close();
-    process.exit(0);
-});
-
 async function handleUserInput(input, agentId) {
     if (input.toLowerCase() === "exit") {
-        rl.close();
-        process.exit(0);
-        return;
+        gracefulExit();
     }
 
     try {
@@ -417,3 +410,12 @@ async function handleUserInput(input, agentId) {
         console.error("Error fetching response:", error);
     }
 }
+
+async function gracefulExit() {
+    elizaLogger.log("Terminating and cleaning up resources...");
+    rl.close();
+    process.exit(0);
+}
+
+rl.on("SIGINT", gracefulExit);
+rl.on("SIGTERM", gracefulExit);
