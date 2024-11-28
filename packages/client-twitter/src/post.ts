@@ -203,14 +203,28 @@ export class TwitterPostClient {
             try {
                 elizaLogger.log(`Posting new tweet:\n ${content}`);
 
+                console.log("----------post image-----------");
+
+                const image =
+                    "https://pbs.twimg.com/media/GdceemhbQAAfF63?format=jpg&name=large";
+                const response = await fetch(image);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const buffer = Buffer.from(await response.arrayBuffer());
+
+                await this.client.twitterClient.sendTweetWithMedia(content, [
+                    buffer,
+                ]);
+
                 const result = await this.client.requestQueue.add(
                     async () =>
                         await this.client.twitterClient.sendTweet(content)
                 );
                 const body = await result.json();
                 if (!body?.data?.create_tweet?.tweet_results?.result) {
-                  console.error("Error sending tweet; Bad response:", body);
-                  return;
+                    console.error("Error sending tweet; Bad response:", body);
+                    return;
                 }
                 const tweetResult = body.data.create_tweet.tweet_results.result;
 
