@@ -4,6 +4,7 @@ import { Content, Memory, UUID } from "@ai16z/eliza";
 import { stringToUuid } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import { elizaLogger } from "@ai16z/eliza";
+import { generateImage } from "./imageGeneration";
 
 const MAX_TWEET_LENGTH = 280; // Updated to Twitter's current character limit
 
@@ -178,8 +179,10 @@ export async function sendTweet(
     for (const [index, chunk] of tweetChunks.entries()) {
         let body, result;
         console.log("----------final function reply with image-----------");
-        const image =
-            "https://pbs.twimg.com/media/GdceemhbQAAfF63?format=jpg&name=large";
+        const image = await generateImage(
+            "Generate an image for this tweet:" + content.text,
+            "1"
+        );
         const response = await fetch(image);
         console.log(response);
         if (!response.ok) {
