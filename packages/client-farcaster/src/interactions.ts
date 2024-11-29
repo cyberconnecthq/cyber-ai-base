@@ -42,7 +42,7 @@ export class FarcasterInteractionManager {
 
             this.timeout = setTimeout(
                 handleInteractionsLoop,
-                (Math.floor(Math.random() * (5 - 2 + 1)) + 2) * 60 * 1000
+                Math.floor(Math.random() * 2) * 60 * 1000
             ); // Random interval between 2-5 minutes
         };
 
@@ -78,8 +78,7 @@ export class FarcasterInteractionManager {
                 cast.author.username,
                 cast.text
             );
-            const messageHash = toHex(cast.hash);
-            const conversationId = `${messageHash}-${this.runtime.agentId}`;
+            const conversationId = `${cast.thread_hash}-${this.runtime.agentId}`;
             const roomId = stringToUuid(conversationId);
             const userId = stringToUuid(cast.author.username.toString());
 
@@ -135,6 +134,16 @@ export class FarcasterInteractionManager {
             return { text: "", action: "IGNORE" };
         }
 
+        if (this.cache.has(`farcaster/cast_interaction_handled/${cast.hash}`)) {
+            console.log("skipping cast already handled", cast.hash);
+            return;
+        } else {
+            this.cache.set(
+                `farcaster/cast_interaction_handled/${cast.hash}`,
+                true
+            );
+        }
+
         const currentPost = formatCast(cast);
 
         const { timeline } = await this.client.getTimeline({
@@ -156,7 +165,6 @@ export class FarcasterInteractionManager {
             timeline: formattedTimeline,
             currentPost,
         });
-        console.log("🚀 ~ FarcasterInteractionManager ~ state:", state);
 
         const shouldRespondContext = composeContext({
             state,

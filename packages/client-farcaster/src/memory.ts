@@ -7,7 +7,7 @@ import {
     type UUID,
 } from "@ai16z/eliza";
 import { toHex } from "viem";
-import { castUuid } from "./utils";
+import { castUuid, roomUuid } from "./utils";
 import { FarcasterClient } from "./client";
 import { CastWithInteractions } from "@neynar/nodejs-sdk/build/api/index.js";
 
@@ -68,13 +68,18 @@ export async function buildConversationThread({
 
         visited.add(cast.hash);
 
-        const roomId = castUuid({
-            hash: currentCast.hash,
+        const roomId = roomUuid({
+            threadHash: currentCast.thread_hash,
             agentId: runtime.agentId,
         });
 
         // Check if the current tweet has already been saved
-        const memory = await runtime.messageManager.getMemoryById(roomId);
+        const memory = await runtime.messageManager.getMemoryById(
+            castUuid({
+                hash: currentCast.hash,
+                agentId: runtime.agentId,
+            })
+        );
 
         if (!memory) {
             elizaLogger.log("Creating memory for cast", cast.hash);

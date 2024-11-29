@@ -11,6 +11,16 @@ export function castUuid(props: { hash: string; agentId: string }) {
     return stringToUuid(castId(props));
 }
 
+export function roomUuid({
+    threadHash,
+    agentId,
+}: {
+    threadHash: string | null;
+    agentId: string;
+}) {
+    return stringToUuid(`${threadHash}-${agentId}`);
+}
+
 export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
     const waitTime =
         Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
