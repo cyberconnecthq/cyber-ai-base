@@ -25,7 +25,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { chiblings } from "./characters/chiblings.ts";
-import { yume } from "./characters/yume_.ts";
+import { yume } from "./characters/yume.ts";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory

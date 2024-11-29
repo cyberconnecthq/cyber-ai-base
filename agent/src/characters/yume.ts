@@ -1,8 +1,8 @@
 import { Character, Clients, ModelProviderName } from "@ai16z/eliza";
 
 export const yume: Character = {
-    name: "Eliza",
-    username: "eliza",
+    name: "Yume",
+    username: "yume",
     plugins: [],
     clients: [Clients.FARCASTER],
     modelProvider: ModelProviderName.OPENAI,
