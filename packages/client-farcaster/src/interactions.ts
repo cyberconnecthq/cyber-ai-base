@@ -7,26 +7,27 @@ import {
     stringToUuid,
     type IAgentRuntime,
 } from "@ai16z/eliza";
-import { isCastAddMessage, type Signer } from "@farcaster/hub-nodejs";
 import type { FarcasterClient } from "./client";
 import { toHex } from "viem";
 import { buildConversationThread, createCastMemory } from "./memory";
-import { Cast, Profile } from "./types";
 import {
     formatCast,
     formatTimeline,
     messageHandlerTemplate,
     shouldRespondTemplate,
 } from "./prompts";
-import { castUuid } from "./utils";
+import { castUuid, wait } from "./utils";
 import { sendCast } from "./actions";
+import {
+    CastWithInteractions,
+    User,
+} from "@neynar/nodejs-sdk/build/api/index.js";
 
 export class FarcasterInteractionManager {
     private timeout: NodeJS.Timeout | undefined;
     constructor(
         public client: FarcasterClient,
         public runtime: IAgentRuntime,
-        private signer: Signer,
         public cache: Map<string, any>
     ) {}
 
@@ -41,7 +42,7 @@ export class FarcasterInteractionManager {
 
             this.timeout = setTimeout(
                 handleInteractionsLoop,
-                (Math.floor(Math.random() * (5 - 2 + 1)) + 2) * 60 * 1000
+                Math.floor(Math.random() * 2) * 60 * 1000
             ); // Random interval between 2-5 minutes
         };
 
@@ -55,39 +56,52 @@ export class FarcasterInteractionManager {
     private async handleInteractions() {
         const agentFid = Number(this.runtime.getSetting("FARCASTER_FID"));
 
-        const { messages } = await this.client.getMentions({
+        const casts = await this.client.getMentions({
             fid: agentFid,
+            pageSize: 20,
         });
-
         const agent = await this.client.getProfile(agentFid);
 
-        for (const mention of messages) {
-            if (!isCastAddMessage(mention)) continue;
-
-            const messageHash = toHex(mention.hash);
-            const messageSigner = toHex(mention.signer);
-            const conversationId = `${messageHash}-${this.runtime.agentId}`;
+        for (const cast of casts) {
+            if (
+                Date.now() - new Date(cast.timestamp).getTime() >
+                5 * 1e3 * 60
+            ) {
+                console.log(
+                    "🚀 ~ FarcasterInteractionManager ~ handleInteractions ~ skipping cast as it is older than 5 minutes",
+                    cast.hash
+                );
+                continue;
+            }
+            console.log(
+                "🚀 ~ FarcasterInteractionManager ~ handleInteractions ~ cast:",
+                cast.author.username,
+                cast.text
+            );
+            const conversationId = `${cast.thread_hash}-${this.runtime.agentId}`;
             const roomId = stringToUuid(conversationId);
-            const userId = stringToUuid(messageSigner);
-
-            const cast = await this.client.loadCastFromMessage(mention);
+            const userId = stringToUuid(cast.author.username.toString());
 
             await this.runtime.ensureConnection(
                 userId,
                 roomId,
-                cast.profile.username,
-                cast.profile.name,
+                cast.author.username,
+                cast.author.display_name,
                 "farcaster"
             );
 
-            await buildConversationThread({
+            const thread = await buildConversationThread({
                 client: this.client,
                 runtime: this.runtime,
                 cast,
             });
+            console.log(
+                "🚀 ~ FarcasterInteractionManager ~ handleInteractions ~ thread:",
+                thread
+            );
 
             const memory: Memory = {
-                content: { text: mention.data.castAddBody.text },
+                content: { text: cast.text },
                 agentId: this.runtime.agentId,
                 userId,
                 roomId,
@@ -106,18 +120,28 @@ export class FarcasterInteractionManager {
         cast,
         memory,
     }: {
-        agent: Profile;
-        cast: Cast;
+        agent: User;
+        cast: CastWithInteractions;
         memory: Memory;
     }) {
-        if (cast.profile.fid === agent.fid) {
-            console.log("skipping cast from bot itself", cast.id);
+        if (cast.author.fid === agent.fid) {
+            console.log("skipping cast from bot itself", cast.hash);
             return;
         }
 
         if (!memory.content.text) {
-            console.log("skipping cast with no text", cast.id);
+            console.log("skipping cast with no text", cast.hash);
             return { text: "", action: "IGNORE" };
+        }
+
+        if (this.cache.has(`farcaster/cast_interaction_handled/${cast.hash}`)) {
+            console.log("skipping cast already handled", cast.hash);
+            return;
+        } else {
+            this.cache.set(
+                `farcaster/cast_interaction_handled/${cast.hash}`,
+                true
+            );
         }
 
         const currentPost = formatCast(cast);
@@ -130,6 +154,10 @@ export class FarcasterInteractionManager {
         const formattedTimeline = formatTimeline(
             this.runtime.character,
             timeline
+        );
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ formattedTimeline:",
+            formattedTimeline
         );
 
         const state = await this.runtime.composeState(memory, {
@@ -146,11 +174,16 @@ export class FarcasterInteractionManager {
                 this.runtime.character?.templates?.shouldRespondTemplate ||
                 shouldRespondTemplate,
         });
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ shouldRespondContext:",
+            shouldRespondContext
+        );
 
         const memoryId = castUuid({
             agentId: this.runtime.agentId,
-            hash: cast.id,
+            hash: cast.hash,
         });
+        console.log("🚀 ~ FarcasterInteractionManager ~ memoryId:", memoryId);
 
         const castMemory =
             await this.runtime.messageManager.getMemoryById(memoryId);
@@ -171,10 +204,14 @@ export class FarcasterInteractionManager {
             context: shouldRespondContext,
             modelClass: ModelClass.SMALL,
         });
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ shouldRespond:",
+            shouldRespond
+        );
 
-        if (!shouldRespond) {
+        if (shouldRespond !== "RESPOND") {
             console.log("Not responding to message");
-            return { text: "", action: "IGNORE" };
+            return { text: "Response Decision:", action: shouldRespond };
         }
 
         const context = composeContext({
@@ -195,34 +232,41 @@ export class FarcasterInteractionManager {
         response.inReplyTo = memoryId;
 
         if (!response.text) return;
+        console.log("🚀 ~ FarcasterInteractionManager ~ response:", response);
 
         try {
             const results = await sendCast({
                 runtime: this.runtime,
                 client: this.client,
-                signer: this.signer,
-                profile: cast.profile,
+                profile: cast.author,
                 content: response,
                 roomId: memory.roomId,
                 inReplyTo: {
-                    fid: cast.message.data.fid,
-                    hash: cast.message.hash,
+                    parentFid: cast.author.fid,
+                    parentHash: cast.hash,
                 },
             });
 
             const newState = await this.runtime.updateRecentMessageState(state);
 
-            for (const { memory } of results) {
-                await this.runtime.messageManager.createMemory(memory);
-            }
+            await this.runtime.messageManager.createMemory(results.memory);
 
             await this.runtime.evaluate(memory, newState);
 
             await this.runtime.processActions(
                 memory,
-                results.map((result) => result.memory),
+                [results.memory],
                 newState
             );
+
+            const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${results.cast.hash} - ${results.cast.author.username}: ${results.cast.text}\nAgent's Output:\n${response.text}`;
+
+            await this.runtime.cacheManager.set(
+                `twitter/tweet_generation_${results.cast.hash}.txt`,
+                responseInfo
+            );
+
+            await wait();
         } catch (error) {
             console.error(`Error sending response cast: ${error}`);
         }

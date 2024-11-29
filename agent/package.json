@@ -26,6 +26,7 @@
         "@ai16z/adapter-sqlite": "workspace:*",
         "@ai16z/client-direct": "workspace:*",
         "@ai16z/client-twitter": "workspace:*",
+        "@ai16z/client-farcaster": "workspace:*",
         "@ai16z/eliza": "workspace:*",
         "@ai16z/plugin-bootstrap": "workspace:*",
         "@ai16z/plugin-node": "workspace:*",

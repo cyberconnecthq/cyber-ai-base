@@ -3,13 +3,29 @@ import type { Hex } from "viem";
 
 const MAX_CAST_LENGTH = 280; // Updated to Twitter's current character limit
 
-export function castId({ hash, agentId }: { hash: Hex; agentId: string }) {
+export function castId({ hash, agentId }: { hash: string; agentId: string }) {
     return `${hash}-${agentId}`;
 }
 
-export function castUuid(props: { hash: Hex; agentId: string }) {
+export function castUuid(props: { hash: string; agentId: string }) {
     return stringToUuid(castId(props));
 }
+
+export function roomUuid({
+    threadHash,
+    agentId,
+}: {
+    threadHash: string | null;
+    agentId: string;
+}) {
+    return stringToUuid(`${threadHash}-${agentId}`);
+}
+
+export const wait = (minTime: number = 1000, maxTime: number = 3000) => {
+    const waitTime =
+        Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+    return new Promise((resolve) => setTimeout(resolve, waitTime));
+};
 
 export function splitPostContent(
     content: string,

@@ -2,6 +2,7 @@ import { PostgresDatabaseAdapter } from "@ai16z/adapter-postgres";
 import { SqliteDatabaseAdapter } from "@ai16z/adapter-sqlite";
 import { DirectClientInterface } from "@ai16z/client-direct";
 import { TwitterClientInterface } from "@ai16z/client-twitter";
+import { FarcasterAgentClient } from "@ai16z/client-farcaster";
 import {
     AgentRuntime,
     CacheManager,
@@ -24,6 +25,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { character } from "./character.ts";
+import { yume } from "./yume.ts";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -88,6 +90,12 @@ export async function initializeClients(
     if (clientTypes.includes("twitter")) {
         const twitterClients = await TwitterClientInterface.start(runtime);
         clients.push(twitterClients);
+    }
+
+    if (clientTypes.includes("farcaster")) {
+        const farcasterClient = new FarcasterAgentClient(runtime);
+        farcasterClient.start();
+        clients.push(farcasterClient);
     }
 
     if (character.plugins?.length > 0) {
@@ -192,16 +200,16 @@ const startAgents = async () => {
 
     // let charactersArg = args.characters || args.character;
 
-    // let characters = [defaultCharacter];
+    let characters = [character, yume];
 
     // if (charactersArg) {
     // characters = await loadCharacters(charactersArg);
     // }
 
     try {
-        // for (const character of characters) {
-        await startAgent(character, directClient);
-        // }
+        for (const character of characters) {
+            await startAgent(character, directClient);
+        }
     } catch (error) {
         elizaLogger.error("Error starting agents:", error);
     }

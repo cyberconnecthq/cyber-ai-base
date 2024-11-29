@@ -1,23 +1,23 @@
 import { IAgentRuntime } from "@ai16z/eliza";
-import {
-    CastAddMessage,
-    CastId,
-    FidRequest,
-    getInsecureHubRpcClient,
-    getSSLHubRpcClient,
-    HubRpcClient,
-    isCastAddMessage,
-    isUserDataAddMessage,
-    Message,
-    MessagesResponse,
-} from "@farcaster/hub-nodejs";
-import { Cast, Profile } from "./types";
 import { toHex } from "viem";
 import { populateMentions } from "./utils";
+import { NeynarAPIClient } from "@neynar/nodejs-sdk";
+import {
+    CastsResponseResult,
+    CastWithInteractions,
+    NotificationType,
+    PostCastResponseCast,
+    User,
+} from "@neynar/nodejs-sdk/build/api/index.js";
+
+type FidRequest = {
+    fid: number;
+    pageSize: number;
+};
 
 export class FarcasterClient {
     runtime: IAgentRuntime;
-    farcaster: HubRpcClient;
+    farcaster: NeynarAPIClient;
 
     cache: Map<string, any>;
 
@@ -29,165 +29,143 @@ export class FarcasterClient {
     }) {
         this.cache = opts.cache;
         this.runtime = opts.runtime;
-        this.farcaster = opts.ssl
-            ? getSSLHubRpcClient(opts.url)
-            : getInsecureHubRpcClient(opts.url);
+        this.farcaster = new NeynarAPIClient({
+            apiKey: this.runtime.getSetting("NEYNAR_API_KEY") as string,
+        });
     }
 
-    async submitMessage(cast: Message, retryTimes?: number): Promise<void> {
-        const result = await this.farcaster.submitMessage(cast);
+    async submitMessage(
+        cast: string,
+        replyTo?: {
+            parentHash: string;
+            parentFid: number;
+        },
+        retryTimes?: number
+    ): Promise<CastWithInteractions> {
+        const result = await this.farcaster.publishCast({
+            signerUuid: this.runtime.getSetting("NEYNAR_SIGNER_UUID") as string,
+            text: cast,
+            parent: replyTo?.parentHash,
+            parentAuthorFid: replyTo?.parentFid,
+        });
 
-        if (result.isErr()) {
-            throw result.error;
+        if (!result.success) {
+            throw new Error("Failed to submit message");
         }
+        // TODO: maybe need to wait for the cast to be indexed
+
+        const detailedCast = await this.farcaster.fetchBulkCasts({
+            casts: [result.cast.hash],
+        });
+
+        return detailedCast.result.casts[0];
     }
 
-    async loadCastFromMessage(message: CastAddMessage): Promise<Cast> {
-        const profileMap = {};
+    // async loadCastFromMessage(message: CastAddMessage): Promise<Cast> {
+    //     const profileMap = {};
 
-        const profile = await this.getProfile(message.data.fid);
+    //     const profile = await this.getProfile(message.data.fid);
 
-        profileMap[message.data.fid] = profile;
+    //     profileMap[message.data.fid] = profile;
 
-        for (const mentionId of message.data.castAddBody.mentions) {
-            if (profileMap[mentionId]) continue;
-            profileMap[mentionId] = await this.getProfile(mentionId);
-        }
+    //     for (const mentionId of message.data.castAddBody.mentions) {
+    //         if (profileMap[mentionId]) continue;
+    //         profileMap[mentionId] = await this.getProfile(mentionId);
+    //     }
 
-        const text = populateMentions(
-            message.data.castAddBody.text,
-            message.data.castAddBody.mentions,
-            message.data.castAddBody.mentionsPositions,
-            profileMap
-        );
+    //     const text = populateMentions(
+    //         message.data.castAddBody.text,
+    //         message.data.castAddBody.mentions,
+    //         message.data.castAddBody.mentionsPositions,
+    //         profileMap
+    //     );
 
-        return {
-            id: toHex(message.hash),
-            message,
-            text,
-            profile,
-        };
-    }
+    //     return {
+    //         id: toHex(message.hash),
+    //         message,
+    //         text,
+    //         profile,
+    //     };
+    // }
 
-    async getCast(castId: CastId): Promise<Message> {
-        const castHash = toHex(castId.hash);
-
+    async getCast(castHash: string): Promise<CastWithInteractions> {
         if (this.cache.has(`farcaster/cast/${castHash}`)) {
             return this.cache.get(`farcaster/cast/${castHash}`);
         }
 
-        const cast = await this.farcaster.getCast(castId);
+        const result = await this.farcaster.fetchBulkCasts({
+            casts: [castHash],
+        });
 
-        if (cast.isErr()) {
-            throw cast.error;
-        }
+        const cast = result.result.casts[0];
 
         this.cache.set(`farcaster/cast/${castHash}`, cast);
 
-        return cast.value;
+        return cast;
     }
 
-    async getCastsByFid(request: FidRequest): Promise<MessagesResponse> {
-        const cast = await this.farcaster.getCastsByFid(request);
-        if (cast.isErr()) {
-            throw cast.error;
-        }
+    async getCastsByFid(request: FidRequest) {
+        const response = await this.farcaster.fetchCastsForUser(request);
 
-        cast.value.messages.map((cast) => {
+        response.casts.map((cast) => {
             this.cache.set(`farcaster/cast/${toHex(cast.hash)}`, cast);
         });
 
-        return cast.value;
+        return response;
     }
 
-    async getMentions(request: FidRequest): Promise<MessagesResponse> {
-        const cast = await this.farcaster.getCastsByMention(request);
-        if (cast.isErr()) {
-            throw cast.error;
-        }
-
-        cast.value.messages.map((cast) => {
-            this.cache.set(`farcaster/cast/${toHex(cast.hash)}`, cast);
+    async getMentions(request: FidRequest): Promise<CastWithInteractions[]> {
+        const response = await this.farcaster.fetchAllNotifications({
+            fid: request.fid,
+            type: [NotificationType.Mentions, NotificationType.Replies],
         });
 
-        return cast.value;
-    }
+        const casts = response.notifications
+            .map((notification) => {
+                return notification.cast;
+            })
+            .filter(Boolean);
 
-    async getProfile(fid: number): Promise<Profile> {
-        if (this.cache.has(`farcaster/profile/${fid}`)) {
-            return this.cache.get(`farcaster/profile/${fid}`) as Profile;
-        }
-
-        const result = await this.farcaster.getUserDataByFid({
-            fid: fid,
-            reverse: true,
-        });
-
-        if (result.isErr()) {
-            throw result.error;
-        }
-
-        const profile: Profile = {
-            fid,
-            name: "",
-            signer: "0x",
-            username: "",
-        };
-
-        const userDataBodyType = {
-            1: "pfp",
-            2: "name",
-            3: "bio",
-            5: "url",
-            6: "username",
-            // 7: "location",
-            // 8: "twitter",
-            // 9: "github",
-        } as const;
-
-        for (const message of result.value.messages) {
-            if (isUserDataAddMessage(message)) {
-                if (message.data.userDataBody.type in userDataBodyType) {
-                    const prop =
-                        userDataBodyType[message.data.userDataBody.type];
-                    profile[prop] = message.data.userDataBody.value;
-                }
+        casts.map((cast) => {
+            if (cast) {
+                this.cache.set(`farcaster/cast/${toHex(cast.hash)}`, cast);
             }
+        });
+
+        return casts as CastWithInteractions[];
+    }
+
+    async getProfile(fid: number): Promise<User> {
+        if (this.cache.has(`farcaster/profile/${fid}`)) {
+            return this.cache.get(`farcaster/profile/${fid}`) as User;
         }
 
-        const [lastMessage] = result.value.messages;
+        const result = await this.farcaster.fetchBulkUsers({
+            fids: [fid],
+        });
 
-        if (lastMessage) {
-            profile.signer = toHex(lastMessage.signer);
-        }
+        const profile = result.users[0];
 
         this.cache.set(`farcaster/profile/${fid}`, profile);
 
         return profile;
     }
 
-    async getTimeline(request: FidRequest): Promise<{
-        timeline: Cast[];
-        nextPageToken?: Uint8Array | undefined;
+    async getTimeline(config: FidRequest): Promise<{
+        timeline: CastWithInteractions[];
+        nextPageToken?: string | null;
     }> {
-        const timeline: Cast[] = [];
+        const timeline: CastWithInteractions[] = [];
 
-        const results = await this.getCastsByFid(request);
+        const results = await this.getCastsByFid(config);
 
-        for (const message of results.messages) {
-            if (isCastAddMessage(message)) {
-                this.cache.set(
-                    `farcaster/cast/${toHex(message.hash)}`,
-                    message
-                );
-
-                timeline.push(await this.loadCastFromMessage(message));
-            }
-        }
+        results.casts.map((cast) => {
+            timeline.push(cast);
+        });
 
         return {
             timeline,
-            nextPageToken: results.nextPageToken,
+            nextPageToken: results.next.cursor,
         };
     }
 }

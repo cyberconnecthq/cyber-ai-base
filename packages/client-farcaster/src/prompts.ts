@@ -4,16 +4,17 @@ import {
     shouldRespondFooter,
 } from "@ai16z/eliza";
 import type { Cast } from "./types";
+import { CastWithInteractions } from "@neynar/nodejs-sdk/build/api/index.js";
 
-export const formatCast = (cast: Cast) => {
-    return `ID: ${cast.id}
-From: ${cast.profile.name} (@${cast.profile.username})${cast.profile.username})${cast.inReplyTo ? `\nIn reply to: ${cast.inReplyTo.id}` : ""}
+export const formatCast = (cast: CastWithInteractions) => {
+    return `ID: ${cast.hash}
+From: ${cast.author.fid} (@${cast.author.username})${cast.author.username})${cast.parent_hash ? `\nIn reply to: ${cast.parent_author.fid}` : ""}
 Text: ${cast.text}`;
 };
 
 export const formatTimeline = (
     character: Character,
-    timeline: Cast[]
+    timeline: CastWithInteractions[]
 ) => `# ${character.name}'s Home Timeline
 ${timeline.map(formatCast).join("\n")}
 `;
