@@ -4,7 +4,7 @@ import { Content, Memory, UUID } from "@ai16z/eliza";
 import { stringToUuid } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import { elizaLogger } from "@ai16z/eliza";
-import { generateImage } from "./imageGeneration";
+import { ChibsModelId, generateImage, promptForChibs } from "./imageGeneration";
 
 const MAX_TWEET_LENGTH = 280; // Updated to Twitter's current character limit
 
@@ -180,14 +180,14 @@ export async function sendTweet(
         let body, result;
         console.log("----------final function reply with image-----------");
         const image = await generateImage(
-            "Generate an penguin for this tweet:" +
-                content.text +
-                ", cartoon, cute white eyes with black eyeball",
-            "9d758849-365e-4cf5-8dc1-0fdd9bc3209c"
+            promptForChibs(content.text),
+            ChibsModelId
         );
         const response = image ? await fetch(image) : null;
         console.log(response);
-        const buffer = response?.ok ? Buffer.from(await response.arrayBuffer()) : null;
+        const buffer = response?.ok
+            ? Buffer.from(await response.arrayBuffer())
+            : null;
         if (index === tweetChunks.length - 1 && buffer) {
             result = await client.requestQueue.add(
                 async () =>

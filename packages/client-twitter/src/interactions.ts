@@ -328,17 +328,9 @@ export class TwitterInteractionClient {
             template: twitterShouldRespondWithImageTemplate,
         });
 
-        const shouldRespond = await generateShouldRespond({
-            runtime: this.runtime,
-            context: shouldRespondContext,
-            modelClass: ModelClass.MEDIUM,
-        });
+        const shouldRespond = "RESPOND"
 
-        const shouldRespondWithImage = await generateShouldRespond({
-            runtime: this.runtime,
-            context: shouldRespondWithImageContext,
-            modelClass: ModelClass.MEDIUM,
-        });
+        const shouldRespondWithImage = "RESPOND"
 
         console.log("----------shouldRespondWithImage-----------");
         console.log(`----------${shouldRespondWithImage}-----------`);
