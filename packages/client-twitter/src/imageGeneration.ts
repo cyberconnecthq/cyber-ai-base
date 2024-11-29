@@ -1,3 +1,5 @@
+import { elizaLogger } from "@ai16z/eliza";
+
 export const generateImage = async (prompt: string, modelId: string) => {
     const res = await fetch("https://api.stg.cyberconnect.dev/yume/", {
         method: "POST",
@@ -13,5 +15,6 @@ export const generateImage = async (prompt: string, modelId: string) => {
         }),
     });
     const data = await res.json();
+    elizaLogger.log('image generation:', data)
     return data?.data?.generateImage;
 };

@@ -180,16 +180,15 @@ export async function sendTweet(
         let body, result;
         console.log("----------final function reply with image-----------");
         const image = await generateImage(
-            "Generate an image for this tweet:" + content.text,
-            "1"
+            "Generate an penguin for this tweet:" +
+                content.text +
+                ", cartoon, cute white eyes with black eyeball",
+            "9d758849-365e-4cf5-8dc1-0fdd9bc3209c"
         );
-        const response = await fetch(image);
+        const response = image ? await fetch(image) : null;
         console.log(response);
-        if (!response.ok) {
-            continue;
-        }
-        const buffer = Buffer.from(await response.arrayBuffer());
-        if (index === tweetChunks.length - 1) {
+        const buffer = response?.ok ? Buffer.from(await response.arrayBuffer()) : null;
+        if (index === tweetChunks.length - 1 && buffer) {
             result = await client.requestQueue.add(
                 async () =>
                     await client.twitterClient.sendTweetWithMedia(

@@ -135,7 +135,7 @@ export class TwitterInteractionClient {
 
         const twitterUsername = this.client.profile.username;
         try {
-            // Check for mentions
+            // Check for mentionsx
             const tweetCandidates = (
                 await this.client.fetchSearchTweets(
                     `@${twitterUsername}`,
@@ -143,6 +143,8 @@ export class TwitterInteractionClient {
                     SearchMode.Latest
                 )
             ).tweets;
+
+            elizaLogger.log('search result: ', tweetCandidates)
 
             // de-duplicate tweetCandidates with a set
             const uniqueTweetCandidates = [...new Set(tweetCandidates)];
