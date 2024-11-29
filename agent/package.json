@@ -12,7 +12,6 @@
         "assets": []
     },
     "scripts": {
-        "build:vite": "vite build",
         "build": "tsup src/index.ts --format esm --dts",
         "start": "tsc && node --loader ts-node/esm src/index.ts",
         "dev": "tsc && nodemon --watch src --watch ../core/dist --ext ts,json --exec 'node --loader ts-node/esm' src/index.ts",
@@ -25,8 +24,8 @@
         "@ai16z/adapter-postgres": "workspace:*",
         "@ai16z/adapter-sqlite": "workspace:*",
         "@ai16z/client-direct": "workspace:*",
-        "@ai16z/client-twitter": "workspace:*",
         "@ai16z/client-farcaster": "workspace:*",
+        "@cyberlab/ai-client-twitter": "workspace:*",
         "@ai16z/eliza": "workspace:*",
         "@ai16z/plugin-bootstrap": "workspace:*",
         "@ai16z/plugin-node": "workspace:*",

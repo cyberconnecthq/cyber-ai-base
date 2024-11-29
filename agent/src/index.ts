@@ -1,8 +1,7 @@
 import { PostgresDatabaseAdapter } from "@ai16z/adapter-postgres";
 import { SqliteDatabaseAdapter } from "@ai16z/adapter-sqlite";
-import { DirectClientInterface } from "@ai16z/client-direct";
-import { TwitterClientInterface } from "@ai16z/client-twitter";
 import { FarcasterAgentClient } from "@ai16z/client-farcaster";
+import { TwitterClientInterface } from "@cyberlab/ai-client-twitter";
 import {
     AgentRuntime,
     CacheManager,
@@ -17,6 +16,7 @@ import {
     elizaLogger,
     settings,
     stringToUuid,
+    validateCharacterConfig,
 } from "@ai16z/eliza";
 import { bootstrapPlugin } from "@ai16z/plugin-bootstrap";
 import { createNodePlugin } from "@ai16z/plugin-node";
@@ -24,8 +24,8 @@ import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { character } from "./character.ts";
-import { yume } from "./yume.ts";
+import { chiblings } from "./characters/chiblings.ts";
+import { yume } from "./characters/yume_.ts";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -158,7 +158,7 @@ function intializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
     return cache;
 }
 
-async function startAgent(character: Character, directClient) {
+async function startAgent(character: Character, directClient?) {
     try {
         character.id ??= stringToUuid(character.name);
         character.username ??= character.name;
@@ -181,7 +181,7 @@ async function startAgent(character: Character, directClient) {
 
         const clients = await initializeClients(character, runtime);
 
-        directClient.registerAgent(runtime);
+        // directClient.registerAgent(runtime);
 
         return clients;
     } catch (error) {
@@ -195,20 +195,20 @@ async function startAgent(character: Character, directClient) {
 }
 
 const startAgents = async () => {
-    const directClient = await DirectClientInterface.start();
+    // http service服务
+    // const directClient = await DirectClientInterface.start();
     // const args = parseArguments();
 
     // let charactersArg = args.characters || args.character;
 
-    let characters = [character, yume];
-
     // if (charactersArg) {
     // characters = await loadCharacters(charactersArg);
     // }
+    const characters = [chiblings, yume];
 
     try {
         for (const character of characters) {
-            await startAgent(character, directClient);
+            await startAgent(character);
         }
     } catch (error) {
         elizaLogger.error("Error starting agents:", error);
