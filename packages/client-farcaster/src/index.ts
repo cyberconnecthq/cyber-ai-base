@@ -10,7 +10,6 @@ export class FarcasterAgentClient implements Client {
     posts: FarcasterPostManager;
     interactions: FarcasterInteractionManager;
 
-    private signer: Signer;
 
     constructor(
         public runtime: IAgentRuntime,
@@ -18,9 +17,7 @@ export class FarcasterAgentClient implements Client {
     ) {
         const cache = new Map<string, any>();
 
-        this.signer = new NobleEd25519Signer(
-            hexToBytes(runtime.getSetting("FARCASTER_PRIVATE_KEY")! as Hex)
-        );
+
 
         this.client =
             client ??
@@ -36,14 +33,12 @@ export class FarcasterAgentClient implements Client {
         this.posts = new FarcasterPostManager(
             this.client,
             this.runtime,
-            this.signer,
             cache
         );
 
         this.interactions = new FarcasterInteractionManager(
             this.client,
             this.runtime,
-            this.signer,
             cache
         );
     }

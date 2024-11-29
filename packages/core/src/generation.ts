@@ -62,6 +62,7 @@ export async function generateText({
         return "";
     }
 
+    elizaLogger.debug("🚀 ~ Generating text context:", context);
     elizaLogger.log("Generating text...");
 
     elizaLogger.info("Generating text with options:", {

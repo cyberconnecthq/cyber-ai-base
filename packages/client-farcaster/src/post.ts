@@ -1,4 +1,3 @@
-import { Signer } from "@farcaster/hub-nodejs";
 import {
     composeContext,
     generateText,
@@ -18,7 +17,6 @@ export class FarcasterPostManager {
     constructor(
         public client: FarcasterClient,
         public runtime: IAgentRuntime,
-        private signer: Signer,
         public cache: Map<string, any>
     ) {}
 
@@ -123,10 +121,9 @@ export class FarcasterPostManager {
 
             try {
                 // TODO: handle all the casts?
-                const [{ cast }] = await sendCast({
+                const { cast } = await sendCast({
                     client: this.client,
                     runtime: this.runtime,
-                    signer: this.signer,
                     roomId: generateRoomId,
                     content: { text: content },
                     profile,
@@ -134,7 +131,7 @@ export class FarcasterPostManager {
 
                 const roomId = castUuid({
                     agentId: this.runtime.agentId,
-                    hash: cast.id,
+                    hash: cast.hash,
                 });
 
                 await this.runtime.ensureRoomExists(roomId);

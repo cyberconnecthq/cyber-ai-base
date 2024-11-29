@@ -1,4 +1,3 @@
-import { isCastAddMessage } from "@farcaster/hub-nodejs";
 import {
     elizaLogger,
     embeddingZeroVector,
@@ -7,10 +6,10 @@ import {
     type Memory,
     type UUID,
 } from "@ai16z/eliza";
-import type { Cast } from "./types";
 import { toHex } from "viem";
 import { castUuid } from "./utils";
 import { FarcasterClient } from "./client";
+import { CastWithInteractions } from "@neynar/nodejs-sdk/build/api/index.js";
 
 export function createCastMemory({
     roomId,
@@ -21,18 +20,18 @@ export function createCastMemory({
     roomId: UUID;
     agentId: UUID;
     userId: UUID;
-    cast: Cast;
+    cast: CastWithInteractions;
 }): Memory {
-    const inReplyTo = cast.message.data.castAddBody.parentCastId
+    const inReplyTo = cast.parent_hash
         ? castUuid({
-              hash: toHex(cast.message.data.castAddBody.parentCastId.hash),
+              hash: toHex(cast.parent_hash),
               agentId,
           })
         : undefined;
 
     return {
         id: castUuid({
-            hash: cast.id,
+            hash: cast.hash,
             agentId,
         }),
         agentId,
@@ -42,11 +41,11 @@ export function createCastMemory({
             source: "farcaster",
             url: "",
             inReplyTo,
-            hash: cast.id,
+            hash: cast.hash,
         },
         roomId,
         embedding: embeddingZeroVector,
-        createdAt: cast.message.data.timestamp * 1000,
+        createdAt: new Date(cast.timestamp).getTime(),
     };
 }
 
@@ -55,22 +54,22 @@ export async function buildConversationThread({
     runtime,
     client,
 }: {
-    cast: Cast;
+    cast: CastWithInteractions;
     runtime: IAgentRuntime;
     client: FarcasterClient;
-}): Promise<void> {
-    const thread: Cast[] = [];
+}): Promise<CastWithInteractions[]> {
+    const thread: CastWithInteractions[] = [];
     const visited: Set<string> = new Set();
 
-    async function processThread(currentCast: Cast) {
-        if (visited.has(cast.id)) {
+    async function processThread(currentCast: CastWithInteractions) {
+        if (visited.has(cast.hash)) {
             return;
         }
 
-        visited.add(cast.id);
+        visited.add(cast.hash);
 
         const roomId = castUuid({
-            hash: currentCast.id,
+            hash: currentCast.hash,
             agentId: runtime.agentId,
         });
 
@@ -78,15 +77,15 @@ export async function buildConversationThread({
         const memory = await runtime.messageManager.getMemoryById(roomId);
 
         if (!memory) {
-            elizaLogger.log("Creating memory for cast", cast.id);
+            elizaLogger.log("Creating memory for cast", cast.hash);
 
-            const userId = stringToUuid(cast.profile.username);
+            const userId = stringToUuid(cast.author.username.toString());
 
             await runtime.ensureConnection(
                 userId,
                 roomId,
-                currentCast.profile.username,
-                currentCast.profile.name,
+                currentCast.author.username,
+                currentCast.author.display_name,
                 "farcaster"
             );
 
@@ -102,17 +101,13 @@ export async function buildConversationThread({
 
         thread.unshift(currentCast);
 
-        if (currentCast.message.data.castAddBody.parentCastId) {
-            const message = await client.getCast(
-                currentCast.message.data.castAddBody.parentCastId
-            );
+        if (currentCast.parent_hash) {
+            const parentCast = await client.getCast(currentCast.parent_hash);
 
-            if (isCastAddMessage(message)) {
-                const parentCast = await client.loadCastFromMessage(message);
-                await processThread(parentCast);
-            }
+            await processThread(parentCast);
         }
     }
 
     await processThread(cast);
+    return thread;
 }

@@ -1,4 +1,3 @@
-import type { CastAddMessage } from "@farcaster/hub-nodejs";
 import type { Hex } from "viem";
 
 export type Profile = {
@@ -12,15 +11,4 @@ export type Profile = {
     // location?: string;
     // twitter?: string;
     // github?: string;
-};
-
-export type Cast = {
-    id: Hex;
-    profile: Profile;
-    text: string;
-    message: CastAddMessage;
-    inReplyTo?: {
-        id: Hex;
-        fid: number;
-    };
 };
