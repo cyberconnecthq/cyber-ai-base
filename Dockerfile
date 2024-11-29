@@ -27,7 +27,7 @@ COPY . .
 
 # Add the environment variables
 ADD scripts /app/scripts
-ADD .env /app/.env
+# ADD .env /app/.env
 
 # Command to run the container
 # CMD ["tail", "-f", "/dev/null"]
