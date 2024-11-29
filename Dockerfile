@@ -1,4 +1,7 @@
-FROM node:23.3.0
+FROM alpine:3.19
+
+ENV NODE_VERSION 23.3.0
+
 # Install pnpm globally
 RUN npm install -g pnpm@9.4.0
 
@@ -11,20 +14,21 @@ ADD package.json /app/package.json
 ADD .npmrc /app/.npmrc
 ADD tsconfig.json /app/tsconfig.json
 ADD pnpm-lock.yaml /app/pnpm-lock.yaml
-RUN pnpm i
-
-# Add the documentation
-ADD docs /app/docs
-RUN pnpm i
-
-# Add the rest of the application code
 ADD packages /app/packages
 RUN pnpm i
+RUN pnpm build
+COPY . .
+
+# Add the documentation
+# ADD docs /app/docs
+# RUN pnpm i
+
+# Add the rest of the application code
 
 # Add the environment variables
 ADD scripts /app/scripts
-ADD characters /app/characters
 ADD .env /app/.env
 
 # Command to run the container
-CMD ["tail", "-f", "/dev/null"]
+# CMD ["tail", "-f", "/dev/null"]
+CMD ["pnpm", "start"]
