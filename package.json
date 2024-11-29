@@ -3,7 +3,6 @@
     "scripts": {
         "preinstall": "npx only-allow pnpm",
         "build": "bash ./scripts/build.sh",
-        "build-docs": "pnpm --dir docs build",
         "start:all": "pnpm --filter \"@ai16z/agent\" start:all --isRoot",
         "start:service:all": "pnpm --filter \"@ai16z/agent\" start:service:all --isRoot",
         "stop:service:all": "pnpm --filter \"@ai16z/agent\" stop:service:all",
