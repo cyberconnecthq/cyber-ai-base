@@ -175,7 +175,7 @@ export async function sendTweet(
     roomId: UUID,
     twitterUsername: string,
     inReplyTo: string,
-    shouldRespondWithImage: boolean
+    shouldRespondWithImage: boolean = false,
 ): Promise<Memory[]> {
     const tweetChunks = splitTweetContent(content.text);
     const sentTweets: Tweet[] = [];
