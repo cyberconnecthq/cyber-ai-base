@@ -52,6 +52,7 @@ export const generateImage = async (prompt: string, modelId: string) => {
         }),
     });
     const data = await res.json();
-    elizaLogger.log("image generation prompt:", prompt);
+    console.log("🚀 ~ generateImage ~ data:", data);
+    // elizaLogger.log("image generation prompt:", prompt);
     return data?.data?.generateImage;
 };

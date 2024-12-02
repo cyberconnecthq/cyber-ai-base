@@ -144,7 +144,7 @@ export class TwitterInteractionClient {
                 )
             ).tweets;
 
-            elizaLogger.log("search result: ", tweetCandidates);
+            // elizaLogger.log("search result: ", tweetCandidates);
 
             // de-duplicate tweetCandidates with a set
             const uniqueTweetCandidates = [...new Set(tweetCandidates)];
