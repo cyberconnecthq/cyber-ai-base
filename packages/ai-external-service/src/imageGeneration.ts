@@ -27,14 +27,14 @@ export const promptForChibsByGpt = async (prompt: string) => {
                     {
                         role: "user",
                         content:
-                            "You are a prompt engineer, parse this text and generate prompt for an image generation which go with this text: " +
+                            "Describe a penguin in less than 20 words from this text: " +
                             prompt,
                     },
                 ],
             }),
         })
     ).json();
-    return response?.choices?.[0]?.message?.content;
+    return response?.choices?.[0]?.message?.content + "; flat color background; cartoon eyes;";
 };
 
 export const generateImage = async (prompt: string, modelId: string) => {
@@ -53,6 +53,6 @@ export const generateImage = async (prompt: string, modelId: string) => {
     });
     const data = await res.json();
     console.log("🚀 ~ generateImage ~ data:", data);
-    // elizaLogger.log("image generation prompt:", prompt);
+    elizaLogger.log("🚀 ~ image generation prompt:", prompt);
     return data?.data?.generateImage;
 };
