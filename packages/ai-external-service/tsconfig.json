@@ -1,20 +1,8 @@
 {
+    "extends": "../../tsconfig.json",
     "compilerOptions": {
-        "rootDir": ".",
-        "module": "ESNext",
-        "moduleResolution": "node",
-        "types": ["node"],
-        "composite": false,
-        "esModuleInterop": true,
-        "incremental": false,
-        "isolatedModules": true,
-        "lib": ["dom", "DOM.Iterable", "ESNext"],
-        "resolveJsonModule": true,
-        "skipLibCheck": true,
-        "strict": true,
-        "target": "ESNext",
-        "noEmit": true
+        "outDir": "dist",
+        "rootDir": "src"
     },
-    "include": ["**/*.ts"],
-    "exclude": ["node_modules"]
+    "include": ["src/**/*.ts"]
 }

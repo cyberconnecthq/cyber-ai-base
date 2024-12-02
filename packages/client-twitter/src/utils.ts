@@ -182,17 +182,19 @@ export async function sendTweet(
     let previousTweetId = inReplyTo;
 
     for (const [index, chunk] of tweetChunks.entries()) {
-        let body, result;
+        let body, result, imageResponse;
         console.log("----------final function reply with image-----------");
-        const imagePrompt = await promptForChibsByGpt(content.text);
-        const image = await generateImage(
-            imagePrompt || promptForChibs(content.text),
-            ChibsModelId
-        );
-        const response = image ? await fetch(image) : null;
-        console.log(response);
-        const buffer = response?.ok
-            ? Buffer.from(await response.arrayBuffer())
+        if (shouldRespondWithImage) {
+            const imagePrompt = await promptForChibsByGpt(content.text);
+            const image = await generateImage(
+                imagePrompt || promptForChibs(content.text),
+                ChibsModelId
+            );
+            imageResponse = image ? await fetch(image) : null;
+            console.log(imageResponse);
+        }
+        const buffer = imageResponse?.ok
+            ? Buffer.from(await imageResponse.arrayBuffer())
             : null;
         if (index === tweetChunks.length - 1 && buffer) {
             result = await client.requestQueue.add(

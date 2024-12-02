@@ -248,6 +248,22 @@ importers:
       '@ai16z/eliza':
         specifier: workspace:*
         version: link:../core
+    devDependencies:
+      eslint:
+        specifier: 9.13.0
+        version: 9.13.0(jiti@2.4.0)
+      eslint-config-prettier:
+        specifier: 9.1.0
+        version: 9.1.0(eslint@9.13.0(jiti@2.4.0))
+      eslint-plugin-prettier:
+        specifier: 5.2.1
+        version: 5.2.1(eslint-config-prettier@9.1.0(eslint@9.13.0(jiti@2.4.0)))(eslint@9.13.0(jiti@2.4.0))(prettier@3.3.3)
+      eslint-plugin-vitest:
+        specifier: 0.5.4
+        version: 0.5.4(eslint@9.13.0(jiti@2.4.0))(typescript@5.6.3)(vitest@2.1.5(@types/node@22.8.4)(jsdom@25.0.1(bufferutil@4.0.8)(canvas@2.11.2(encoding@0.1.13))(utf-8-validate@5.0.10))(terser@5.36.0))
+      tsup:
+        specifier: 8.3.5
+        version: 8.3.5(jiti@2.4.0)(postcss@8.4.49)(typescript@5.6.3)(yaml@2.6.1)
 
   packages/client-auto:
     dependencies:
