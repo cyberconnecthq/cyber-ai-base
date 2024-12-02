@@ -1,11 +1,12 @@
 import { Character, Clients, ModelProviderName } from "@ai16z/eliza";
 import { loadCharacterEnv } from "../loadEnv.ts";
 const envs = loadCharacterEnv("yume") as any;
+import { nftGenerationPlugin } from "plugin-nft-generation";
 
 export const yume: Character = {
     name: "Yume",
     username: "yume",
-    plugins: [],
+    plugins: [nftGenerationPlugin],
     clients: [Clients.FARCASTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {

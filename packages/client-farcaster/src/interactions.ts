@@ -67,10 +67,6 @@ export class FarcasterInteractionManager {
                 Date.now() - new Date(cast.timestamp).getTime() >
                 5 * 1e3 * 60
             ) {
-                console.log(
-                    "🚀 ~ FarcasterInteractionManager ~ handleInteractions ~ skipping cast as it is older than 5 minutes",
-                    cast.hash
-                );
                 continue;
             }
             console.log(
@@ -199,11 +195,18 @@ export class FarcasterInteractionManager {
             );
         }
 
+        const evaluationResult = await this.runtime.evaluate(memory, state);
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ evaluationResult:",
+            evaluationResult
+        );
+
         const shouldRespond = await generateShouldRespond({
             runtime: this.runtime,
             context: shouldRespondContext,
             modelClass: ModelClass.SMALL,
         });
+
         console.log(
             "🚀 ~ FarcasterInteractionManager ~ shouldRespond:",
             shouldRespond
@@ -251,8 +254,6 @@ export class FarcasterInteractionManager {
 
             await this.runtime.messageManager.createMemory(results.memory);
 
-            await this.runtime.evaluate(memory, newState);
-
             await this.runtime.processActions(
                 memory,
                 [results.memory],
@@ -262,7 +263,7 @@ export class FarcasterInteractionManager {
             const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${results.cast.hash} - ${results.cast.author.username}: ${results.cast.text}\nAgent's Output:\n${response.text}`;
 
             await this.runtime.cacheManager.set(
-                `twitter/tweet_generation_${results.cast.hash}.txt`,
+                `farcaster/cast_generation_${results.cast.hash}.txt`,
                 responseInfo
             );
 

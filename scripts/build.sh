@@ -40,8 +40,9 @@ PACKAGES=(
   "client-discord"
   "client-telegram"
   "client-twitter"
-  "client-farcaster",
-  "ai-external-serivce"
+  "client-farcaster"
+  "ai-external-service"
+  "plugin-nft-generation"
 )
 
 # Build packages in specified order

@@ -321,6 +321,10 @@ export class AgentRuntime implements IAgentRuntime {
 
         this.token = opts.token;
 
+        console.log(
+            "🚀 ~ AgentRuntime ~ opts.character?.plugins:",
+            opts.character?.plugins
+        );
         this.plugins = [
             ...(opts.character?.plugins ?? []),
             ...(opts.plugins ?? []),
@@ -555,6 +559,10 @@ export class AgentRuntime implements IAgentRuntime {
      * @returns The results of the evaluation.
      */
     async evaluate(message: Memory, state?: State, didRespond?: boolean) {
+        console.log(
+            "🚀 ~ AgentRuntime ~ evaluate ~ evaluators:",
+            this.evaluators
+        );
         const evaluatorPromises = this.evaluators.map(
             async (evaluator: Evaluator) => {
                 elizaLogger.log("Evaluating", evaluator.name);
@@ -595,16 +603,22 @@ export class AgentRuntime implements IAgentRuntime {
                 this.character.templates?.evaluationTemplate ||
                 evaluationTemplate,
         });
+        console.log("🚀 ~ AgentRuntime ~ evaluate ~ context:", context);
 
         const result = await generateText({
             runtime: this,
             context,
             modelClass: ModelClass.SMALL,
         });
+        console.log("🚀 ~ AgentRuntime ~ evaluate ~ result:", result);
 
         const parsedResult = parseJsonArrayFromText(
             result
         ) as unknown as string[];
+        console.log(
+            "🚀 ~ AgentRuntime ~ evaluate ~ parsedResult:",
+            parsedResult
+        );
 
         this.evaluators
             .filter((evaluator: Evaluator) =>
@@ -953,13 +967,9 @@ Text: ${attachment.text}
                 .join(" ");
         }
 
-
         const knowledegeData = await knowledge.get(this, message);
 
-        const formattedKnowledge = formatKnowledge(
-            knowledegeData
-        );
-
+        const formattedKnowledge = formatKnowledge(knowledegeData);
 
         const initialState = {
             agentId: this.agentId,
@@ -1135,6 +1145,7 @@ Text: ${attachment.text}
         const evaluatorsData = resolvedEvaluators.filter(
             Boolean
         ) as Evaluator[];
+        console.log("🚀 ~ AgentRuntime ~ evaluatorsData:", evaluatorsData);
         const actionsData = resolvedActions.filter(Boolean) as Action[];
 
         const actionState = {
@@ -1242,5 +1253,7 @@ Text: ${attachment.text}
 }
 
 const formatKnowledge = (knowledge: KnowledgeItem[]) => {
-    return knowledge.map((knowledge) => `- ${knowledge.content.text}`).join("\n");
+    return knowledge
+        .map((knowledge) => `- ${knowledge.content.text}`)
+        .join("\n");
 };
