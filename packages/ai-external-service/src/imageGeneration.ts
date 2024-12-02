@@ -34,7 +34,7 @@ export const promptForChibsByGpt = async (prompt: string) => {
             }),
         })
     ).json();
-    return response?.choices?.[0]?.message?.content + "; flat color background; cartoon eyes;";
+    return response?.choices?.[0]?.message?.content + "; flat color background; no eyebrow;";
 };
 
 export const generateImage = async (prompt: string, modelId: string) => {
