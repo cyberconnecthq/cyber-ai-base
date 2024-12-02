@@ -1,6 +1,6 @@
 import { Character, Clients, ModelProviderName } from "@ai16z/eliza";
 import { loadCharacterEnv } from "../loadEnv.ts";
-const envs = loadCharacterEnv("chiblings") as any;
+const envs = loadCharacterEnv("yume") as any;
 
 export const yume: Character = {
     name: "Yume",
