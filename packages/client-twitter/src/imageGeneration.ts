@@ -14,6 +14,10 @@ export const promptForChibs = (prompt: string) => {
 };
 
 export const promptForChibsByGpt = async (prompt: string) => {
+    const p = prompt
+        .toLowerCase()
+        .replaceAll("chibs", "penguin")
+        .replaceAll("chibling", "penguin");
     const response = await (
         await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -28,7 +32,7 @@ export const promptForChibsByGpt = async (prompt: string) => {
                         role: "user",
                         content:
                             "You are a prompt engineer, parse this text and generate prompt for an image generation which go with this text: " +
-                            prompt,
+                            p + "; flat color background; cartoon eyes;",
                     },
                 ],
             }),
