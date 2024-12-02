@@ -204,7 +204,7 @@ const startAgents = async () => {
     // if (charactersArg) {
     // characters = await loadCharacters(charactersArg);
     // }
-    const characters = [chiblings, yume];
+    const characters = [chiblings];
 
     try {
         for (const character of characters) {

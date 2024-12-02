@@ -4,7 +4,12 @@ import { Content, Memory, UUID } from "@ai16z/eliza";
 import { stringToUuid } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import { elizaLogger } from "@ai16z/eliza";
-import { ChibsModelId, generateImage, promptForChibs, promptForChibsByGpt } from "./imageGeneration";
+import {
+    ChibsModelId,
+    generateImage,
+    promptForChibs,
+    promptForChibsByGpt,
+} from "@cyberlab/ai-external-serivce";
 
 const MAX_TWEET_LENGTH = 280; // Updated to Twitter's current character limit
 
@@ -179,7 +184,7 @@ export async function sendTweet(
     for (const [index, chunk] of tweetChunks.entries()) {
         let body, result;
         console.log("----------final function reply with image-----------");
-        const imagePrompt = await promptForChibsByGpt(content.text)
+        const imagePrompt = await promptForChibsByGpt(content.text);
         const image = await generateImage(
             imagePrompt || promptForChibs(content.text),
             ChibsModelId

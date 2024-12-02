@@ -144,7 +144,7 @@ export class TwitterInteractionClient {
                 )
             ).tweets;
 
-            elizaLogger.log('search result: ', tweetCandidates)
+            elizaLogger.log("search result: ", tweetCandidates);
 
             // de-duplicate tweetCandidates with a set
             const uniqueTweetCandidates = [...new Set(tweetCandidates)];
@@ -377,7 +377,6 @@ export class TwitterInteractionClient {
         response.text = removeQuotes(response.text);
 
         if (response.text) {
-            console.log("123123i1231ug1kgk1gdk1gdkw1gk");
             try {
                 const callback: HandlerCallback = async (response: Content) => {
                     const memories = await sendTweet(
