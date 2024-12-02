@@ -9,7 +9,7 @@ export const promptForChibs = (prompt: string) => {
         .replaceAll("chibling", "penguin");
     p +=
         "; cartoon style; cute white eyes with black eyeball; flat color background;";
-    p = "draw a penguin cartoon for this tweet:";
+    p = "draw a penguin cartoon for this tweet:" + p;
     return p;
 };
 
