@@ -237,6 +237,12 @@ export class TwitterInteractionClient {
         }
 
         elizaLogger.log("Processing Tweet: ", tweet.id);
+
+        // if there's a photo
+        for (let i = 0; i < tweet.photos.length; i++) {
+            console.log(tweet.photos[i].url);
+        }
+
         const formatTweet = (tweet: Tweet) => {
             return `  ID: ${tweet.id}
   From: ${tweet.name} (@${tweet.username})
@@ -347,19 +353,20 @@ export class TwitterInteractionClient {
 
         const txHash = tweet.text.match(/0x[A-Fa-f0-9]{64}/)?.[0];
 
-        console.log('--- read tx hash === ' + txHash)
-        console.log('--- tx hash cache=== ' + this.client.cosumedTx)
+        console.log("--- read tx hash === " + txHash);
+        console.log("--- tx hash cache=== " + this.client.cosumedTx);
         let burnChibs = false;
         if (txHash && !this.client.cosumedTx.includes?.(txHash)) {
             burnChibs = await isBurnChibsTx(txHash);
             this.client.cosumedTx.push(txHash);
         }
 
-        console.log('--- has burnt chibs === ' + burnChibs)
+        console.log("--- has burnt chibs === " + burnChibs);
 
+        console.log("----------shouldRespond-----------");
+        console.log(`----------${shouldRespond}-----------`);
         console.log("----------shouldRespondWithImage-----------");
         console.log(`----------${shouldRespondWithImage}-----------`);
-        console.log("----------shouldRespondWithImage-----------");
 
         // Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
         if (shouldRespond !== "RESPOND") {

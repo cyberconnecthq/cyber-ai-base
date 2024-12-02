@@ -1,4 +1,9 @@
-import { Character, Clients, ModelProviderName } from "@ai16z/eliza";
+import {
+    Character,
+    Clients,
+    ModelProviderName,
+    shouldRespondFooter,
+} from "@ai16z/eliza";
 import { loadCharacterEnv } from "../loadEnv.ts";
 const envs = loadCharacterEnv("chiblings") as any;
 export const chiblings: Character = {
@@ -202,4 +207,32 @@ export const chiblings: Character = {
         "resourceful",
         "endearing",
     ],
+    templates: {
+        twitterShouldRespondTemplate:
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
+
+Response options are RESPOND, IGNORE and STOP .
+
+{{agentName}} should respond to messages that are directed at them, or participate in conversations that are interesting or relevant to their background, IGNORE messages that are irrelevant to them, and should STOP if the conversation is concluded.
+
+{{agentName}} is in a room with other users and wants to be conversational, but not annoying.
+{{agentName}} should RESPOND to messages that are directed at them, or participate in conversations that are interesting or relevant to their background.
+If a message is not interesting or relevant, {{agentName}} should IGNORE.
+Unless directly RESPONDing to a user, {{agentName}} should IGNORE messages that are very short or do not contain much information.
+If a user asks {{agentName}} to stop talking, {{agentName}} should STOP.
+If {{agentName}} concludes a conversation and isn't part of the conversation anymore, {{agentName}} should STOP.
+
+{{recentPosts}}
+
+IMPORTANT: {{agentName}} (aka @{{twitterUserName}}) is particularly sensitive about being annoying, so if there is any doubt, it is better to IGNORE than to RESPOND.
+
+{{currentPost}}
+
+Thread of Tweets You Are Replying To:
+
+{{formattedConversation}}
+
+# INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
+` + shouldRespondFooter,
+    },
 };
