@@ -15,7 +15,12 @@ import {
     elizaLogger,
 } from "@ai16z/eliza";
 import { ClientBase } from "./base";
-import { buildConversationThread, sendTweet, wait } from "./utils.ts";
+import {
+    buildConversationThread,
+    sendTweet,
+    wait,
+    isBurnChibsTx,
+} from "./utils.ts";
 import { embeddingZeroVector } from "@ai16z/eliza";
 
 export const twitterMessageHandlerTemplate =
@@ -340,6 +345,18 @@ export class TwitterInteractionClient {
             modelClass: ModelClass.MEDIUM,
         });
 
+        const txHash = tweet.text.match(/0x[A-Fa-f0-9]{64}/)?.[0];
+
+        console.log('--- read tx hash === ' + txHash)
+        console.log('--- tx hash cache=== ' + this.client.cosumedTx)
+        let burnChibs = false;
+        if (txHash && !this.client.cosumedTx.includes?.(txHash)) {
+            burnChibs = await isBurnChibsTx(txHash);
+            this.client.cosumedTx.push(txHash);
+        }
+
+        console.log('--- has burnt chibs === ' + burnChibs)
+
         console.log("----------shouldRespondWithImage-----------");
         console.log(`----------${shouldRespondWithImage}-----------`);
         console.log("----------shouldRespondWithImage-----------");
@@ -385,7 +402,7 @@ export class TwitterInteractionClient {
                         message.roomId,
                         this.runtime.getSetting("TWITTER_USERNAME"),
                         tweet.id,
-                        shouldRespondWithImage === "RESPOND" ? true : false
+                        shouldRespondWithImage === "RESPOND" && burnChibs
                     );
                     return memories;
                 };

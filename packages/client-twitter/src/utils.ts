@@ -356,3 +356,31 @@ function splitParagraph(paragraph: string, maxLength: number): string[] {
 
     return chunks;
 }
+
+export const isBurnChibsTx = async (tx: string) => {
+    const eventlog = await (
+        await fetch(
+            `https://api.w3w.ai/cyber/v1/explorer/transaction/${tx}/logs`,
+            {
+                headers: {
+                    "content-type": "application/json",
+                    Referer: "https://cyberscan.co/",
+                },
+                body: null,
+                method: "GET",
+            }
+        )
+    ).json();
+    const log = eventlog?.data?.[0];
+    console.log("tx log", eventlog);
+    if (
+        log?.address === "0x38f970260c3eeee0adcaed0e2c3e937e8e2e9780" &&
+        log?.function_name === "Transfer" &&
+        log?.input_data?.[1]?.hex_data ===
+            "0x000000000000000000000000000000000000dead"
+    ) {
+        return true;
+    }
+
+    return false;
+};
