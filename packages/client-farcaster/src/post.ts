@@ -85,7 +85,7 @@ export class FarcasterPostManager {
                 }
             );
 
-            // Generate new tweet
+            // Generate new cast
             const context = composeContext({
                 state,
                 template:
@@ -150,10 +150,10 @@ export class FarcasterPostManager {
                     })
                 );
             } catch (error) {
-                console.error("Error sending tweet:", error);
+                console.error("Error sending cast:", error);
             }
         } catch (error) {
-            console.error("Error generating new tweet:", error);
+            console.error("Error generating new cast:", error);
         }
     }
 }

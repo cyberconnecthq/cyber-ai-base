@@ -1,5 +1,8 @@
 import {
     composeContext,
+    Content,
+    elizaLogger,
+    Evaluator,
     generateMessageResponse,
     generateShouldRespond,
     Memory,
@@ -8,7 +11,6 @@ import {
     type IAgentRuntime,
 } from "@ai16z/eliza";
 import type { FarcasterClient } from "./client";
-import { toHex } from "viem";
 import { buildConversationThread, createCastMemory } from "./memory";
 import {
     formatCast,
@@ -67,10 +69,6 @@ export class FarcasterInteractionManager {
                 Date.now() - new Date(cast.timestamp).getTime() >
                 5 * 1e3 * 60
             ) {
-                console.log(
-                    "🚀 ~ FarcasterInteractionManager ~ handleInteractions ~ skipping cast as it is older than 5 minutes",
-                    cast.hash
-                );
                 continue;
             }
             console.log(
@@ -204,10 +202,59 @@ export class FarcasterInteractionManager {
             context: shouldRespondContext,
             modelClass: ModelClass.SMALL,
         });
+
         console.log(
             "🚀 ~ FarcasterInteractionManager ~ shouldRespond:",
             shouldRespond
         );
+
+        const evaluationResult = await this.runtime.evaluate(
+            memory,
+            state,
+            false,
+            async (response: Content) => {
+                console.log(
+                    "🚀 ~ FarcasterInteractionManager ~ response:",
+                    response
+                );
+                if (response.type === "GENERATE_NFT") {
+                    elizaLogger.log("Nft generation result:", response);
+                    const postContent = response.text;
+                    if (!postContent) {
+                        return [];
+                    }
+
+                    elizaLogger.log("Sending NFT generation result cast");
+                    const results = await sendCast({
+                        runtime: this.runtime,
+                        client: this.client,
+                        profile: cast.author,
+                        content: {
+                            text: postContent,
+                        },
+                        roomId: memory.roomId,
+                        inReplyTo: {
+                            parentFid: cast.author.fid,
+                            parentHash: cast.hash,
+                        },
+                    });
+                    elizaLogger.log("Cast sent", results.cast);
+                }
+                return [];
+            },
+            (evaluator: Evaluator) => evaluator.name === "GENERATE_NFT"
+        );
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ evaluationResult:",
+            evaluationResult
+        );
+
+        if (evaluationResult.includes("GENERATE_NFT")) {
+            elizaLogger.log(
+                "Already generated NFT for this message, skip responding"
+            );
+            return { text: "Response Decision:", action: "IGNORE" };
+        }
 
         if (shouldRespond !== "RESPOND") {
             console.log("Not responding to message");
@@ -251,7 +298,15 @@ export class FarcasterInteractionManager {
 
             await this.runtime.messageManager.createMemory(results.memory);
 
-            await this.runtime.evaluate(memory, newState);
+            await this.runtime.evaluate(
+                memory,
+                newState,
+                true,
+                undefined,
+                (evaluator: Evaluator) => {
+                    return evaluator.name !== "GENERATE_NFT";
+                }
+            );
 
             await this.runtime.processActions(
                 memory,
@@ -262,7 +317,7 @@ export class FarcasterInteractionManager {
             const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${results.cast.hash} - ${results.cast.author.username}: ${results.cast.text}\nAgent's Output:\n${response.text}`;
 
             await this.runtime.cacheManager.set(
-                `twitter/tweet_generation_${results.cast.hash}.txt`,
+                `farcaster/cast_generation_${results.cast.hash}.txt`,
                 responseInfo
             );
 

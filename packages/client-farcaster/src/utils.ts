@@ -33,34 +33,34 @@ export function splitPostContent(
 ): string[] {
     const paragraphs = content.split("\n\n").map((p) => p.trim());
     const posts: string[] = [];
-    let currentTweet = "";
+    let currentCast = "";
 
     for (const paragraph of paragraphs) {
         if (!paragraph) continue;
 
-        if ((currentTweet + "\n\n" + paragraph).trim().length <= maxLength) {
-            if (currentTweet) {
-                currentTweet += "\n\n" + paragraph;
+        if ((currentCast + "\n\n" + paragraph).trim().length <= maxLength) {
+            if (currentCast) {
+                currentCast += "\n\n" + paragraph;
             } else {
-                currentTweet = paragraph;
+                currentCast = paragraph;
             }
         } else {
-            if (currentTweet) {
-                posts.push(currentTweet.trim());
+            if (currentCast) {
+                posts.push(currentCast.trim());
             }
             if (paragraph.length <= maxLength) {
-                currentTweet = paragraph;
+                currentCast = paragraph;
             } else {
                 // Split long paragraph into smaller chunks
                 const chunks = splitParagraph(paragraph, maxLength);
                 posts.push(...chunks.slice(0, -1));
-                currentTweet = chunks[chunks.length - 1];
+                currentCast = chunks[chunks.length - 1];
             }
         }
     }
 
-    if (currentTweet) {
-        posts.push(currentTweet.trim());
+    if (currentCast) {
+        posts.push(currentCast.trim());
     }
 
     return posts;
