@@ -73,7 +73,7 @@ export async function buildConversationThread({
             agentId: runtime.agentId,
         });
 
-        // Check if the current tweet has already been saved
+        // Check if the current cast has already been saved
         const memory = await runtime.messageManager.getMemoryById(
             castUuid({
                 hash: currentCast.hash,

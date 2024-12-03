@@ -42,6 +42,7 @@ PACKAGES=(
   "client-twitter"
   "client-farcaster"
   "ai-external-service"
+  "plugin-nft-generation"
 )
 
 # Build packages in specified order

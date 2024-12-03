@@ -1,6 +1,4 @@
 import { Client, IAgentRuntime } from "@ai16z/eliza";
-import { Signer, NobleEd25519Signer } from "@farcaster/hub-nodejs";
-import { Hex, hexToBytes } from "viem";
 import { FarcasterClient } from "./client";
 import { FarcasterPostManager } from "./post";
 import { FarcasterInteractionManager } from "./interactions";
