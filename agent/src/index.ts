@@ -26,6 +26,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { chiblings } from "./characters/chiblings.ts";
 import { yume } from "./characters/yume.ts";
+import yargs from "yargs";
+import * as agents from "./characters/index.ts";
 
 const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
 const __dirname = path.dirname(__filename); // get the name of the directory
@@ -62,6 +64,28 @@ function initializeDatabase(dataDir: string) {
         // ":memory:";
         const db = new SqliteDatabaseAdapter(new Database(filePath));
         return db;
+    }
+}
+
+export function parseArguments(): {
+    character?: string;
+    characters?: string;
+} {
+    try {
+        return yargs(process.argv.slice(2))
+            .option("character", {
+                type: "string",
+                description: "Path to the character JSON file",
+            })
+            .option("characters", {
+                type: "string",
+                description:
+                    "Comma separated list of paths to character JSON files",
+            })
+            .parseSync();
+    } catch (error) {
+        console.error("Error parsing arguments:", error);
+        return {};
     }
 }
 
@@ -194,17 +218,34 @@ async function startAgent(character: Character, directClient?) {
     }
 }
 
+function loadCharacters(charactersArg: string) {
+    const characterNames = charactersArg.split(",");
+
+    const loadedCharacters = characterNames
+        .map((name) => agents[name])
+        .filter(Boolean);
+
+    if (loadedCharacters.length === 0) {
+        elizaLogger.error("No characters found");
+        throw new Error("No characters found");
+    }
+
+    return loadedCharacters as Character[];
+}
+
 const startAgents = async () => {
-    // http service服务
-    // const directClient = await DirectClientInterface.start();
-    // const args = parseArguments();
+    const args = parseArguments();
 
-    // let charactersArg = args.characters || args.character;
+    let charactersArg = args.characters || args.character || "";
+    console.log("🚀 ~ startAgents ~ charactersArg:", charactersArg);
 
-    // if (charactersArg) {
-    // characters = await loadCharacters(charactersArg);
-    // }
-    const characters = [chiblings];
+    let characters = loadCharacters(charactersArg);
+    console.log("🚀 ~ startAgents ~ characters:", characters);
+
+    if (characters.length === 0) {
+        elizaLogger.error("No characters found");
+        return;
+    }
 
     try {
         for (const character of characters) {
