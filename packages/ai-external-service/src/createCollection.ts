@@ -43,5 +43,6 @@ mutation createToken($input: CreateCollectionByAgentInput!) {
         status: data?.data?.CreateCollectionByAgent?.status,
         contractAddress: data?.data?.CreateCollectionByAgent?.contractAddress,
         tokenId: data?.data?.CreateCollectionByAgent?.tokenId,
+        nftId: data?.data?.CreateCollectionByAgent?.nftId,
     };
 };
