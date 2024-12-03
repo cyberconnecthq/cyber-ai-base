@@ -1,7 +1,11 @@
 import type { FarcasterClient } from "./client";
 import type { Content, IAgentRuntime, Memory, UUID } from "@ai16z/eliza";
 import { createCastMemory } from "./memory";
-import { CastWithInteractions, User } from "@neynar/nodejs-sdk/build/api/index.js";
+import {
+    CastWithInteractions,
+    Embed,
+    User,
+} from "@neynar/nodejs-sdk/build/api/index.js";
 
 export async function sendCast({
     client,
@@ -9,6 +13,7 @@ export async function sendCast({
     content,
     roomId,
     inReplyTo,
+    embeds,
 }: {
     profile: User;
     client: FarcasterClient;
@@ -19,8 +24,9 @@ export async function sendCast({
         parentHash: string;
         parentFid: number;
     };
+    embeds?: Embed[];
 }): Promise<{ memory: Memory; cast: CastWithInteractions }> {
-    const result = await client.submitMessage(content.text, inReplyTo);
+    const result = await client.submitMessage(content.text, inReplyTo, embeds);
 
     return {
         cast: result,

@@ -22,6 +22,12 @@ export const isNftCreationParams = (
     object: any
 ): object is NftCreationParams => {
     if (NftCreationParamsSchema.safeParse(object).success) {
+        if (
+            object.creatorAddress.length !== 42 ||
+            !object.creatorAddress.startsWith("0x")
+        ) {
+            return false;
+        }
         return true;
     }
     console.error("Invalid content: ", object);

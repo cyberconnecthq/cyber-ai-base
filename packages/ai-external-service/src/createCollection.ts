@@ -20,8 +20,10 @@ export const createCollection = async (
             query: `
 mutation createToken($input: CreateCollectionByAgentInput!) {
   CreateCollectionByAgent(input: $input) {
+    status
     tokenId
     contractAddress
+    nftId
   }
 }
 `,
@@ -30,7 +32,7 @@ mutation createToken($input: CreateCollectionByAgentInput!) {
                     creator: params.creator,
                     name: params.name,
                     description: params.description,
-                    image: "https://picsum.photos/id/1/200/300",
+                    image: params.image,
                     signature:
                         "LsVo7wLdn7XPAOTcb12802hykFWuM0zkRli0YwZdnsghEvBJpWeLV8dfchrZ",
                 },

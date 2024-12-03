@@ -623,7 +623,7 @@ export class AgentRuntime implements IAgentRuntime {
                 evaluator.handler(
                     this,
                     message,
-                    undefined,
+                    state,
                     undefined,
                     callback
                 );

@@ -16,7 +16,7 @@ import {
 } from "@ai16z/eliza";
 import { extractNftParamsTemplate } from "./extractNftParamsTemplate";
 import { isNftCreationParams, NftCreationParamsSchema } from "./types";
-import { createCollection } from "@cyberlab/ai-external-serivce";
+import { createCollection, generateImage } from "@cyberlab/ai-external-serivce";
 
 export const nftGenerationEvaluator: Evaluator = {
     name: "GENERATE_NFT",
@@ -80,6 +80,13 @@ export const nftGenerationEvaluator: Evaluator = {
             });
             return;
         }
+        let imageUrl = _state.imageUrlInPost as string | undefined;
+        if (!imageUrl) {
+            imageUrl = await generateImage(
+                `please generate an image for this NFT: ${content.object.name} ${content.object.description}`,
+                runtime.getSetting("EXACTLY_MODEL_ID") as string
+            );
+        }
 
         try {
             console.log(
@@ -90,7 +97,7 @@ export const nftGenerationEvaluator: Evaluator = {
                 name: content.object.name,
                 description: content.object.description,
                 creator: content.object.creatorAddress,
-                image: "",
+                image: imageUrl,
             });
             return callback({
                 text: `Here is your generated NFT link! tokenId:${result.tokenId}, contractAddress:${result.contractAddress},
@@ -99,6 +106,7 @@ export const nftGenerationEvaluator: Evaluator = {
                 type: "GENERATE_NFT",
                 status: "SUCCESS",
                 nftLink: "https://www.example.com/image.jpg",
+                nftImageUrl: imageUrl,
             });
         } catch (error) {
             elizaLogger.error(`Failed to generate NFT. Error: ${error}`);

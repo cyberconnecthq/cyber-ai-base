@@ -8,6 +8,7 @@ import {
     NotificationType,
     PostCastResponseCast,
     User,
+    Embed,
 } from "@neynar/nodejs-sdk/build/api/index.js";
 
 type FidRequest = {
@@ -40,13 +41,14 @@ export class FarcasterClient {
             parentHash: string;
             parentFid: number;
         },
-        retryTimes?: number
+        embeds?: Embed[]
     ): Promise<CastWithInteractions> {
         const result = await this.farcaster.publishCast({
             signerUuid: this.runtime.getSetting("NEYNAR_SIGNER_UUID") as string,
             text: cast,
             parent: replyTo?.parentHash,
             parentAuthorFid: replyTo?.parentFid,
+            embeds: embeds,
         });
 
         if (!result.success) {

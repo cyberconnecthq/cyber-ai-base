@@ -12,7 +12,7 @@ export const yume: Character = {
     name: "Salad",
     username: "salad",
     plugins: [nftGenerationPlugin],
-    clients: [Clients.FARCASTER, Clients.TWITTER],
+    clients: [Clients.FARCASTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {
         secrets: {

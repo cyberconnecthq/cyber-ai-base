@@ -22,9 +22,19 @@ import { castUuid, wait } from "./utils";
 import { sendCast } from "./actions";
 import {
     CastWithInteractions,
+    Embed,
     User,
 } from "@neynar/nodejs-sdk/build/api/index.js";
 
+function extractImageUrlFromEmbed(embed?: Embed) {
+    if (!embed) return null;
+    if ("url" in embed) {
+        if (embed.metadata?.content_type?.startsWith("image")) {
+            return embed.url;
+        }
+    }
+    return null;
+}
 export class FarcasterInteractionManager {
     private timeout: NodeJS.Timeout | undefined;
     constructor(
@@ -158,10 +168,14 @@ export class FarcasterInteractionManager {
             formattedTimeline
         );
 
+        const imageUrl = extractImageUrlFromEmbed(cast.embeds?.[0]);
+        console.log("🚀 ~ FarcasterInteractionManager ~ imageUrl:", imageUrl);
+
         const state = await this.runtime.composeState(memory, {
             farcasterUsername: agent.username,
             timeline: formattedTimeline,
             currentPost,
+            imageUrlInPost: imageUrl,
         });
 
         const shouldRespondContext = composeContext({
@@ -197,17 +211,6 @@ export class FarcasterInteractionManager {
             );
         }
 
-        const shouldRespond = await generateShouldRespond({
-            runtime: this.runtime,
-            context: shouldRespondContext,
-            modelClass: ModelClass.SMALL,
-        });
-
-        console.log(
-            "🚀 ~ FarcasterInteractionManager ~ shouldRespond:",
-            shouldRespond
-        );
-
         const evaluationResult = await this.runtime.evaluate(
             memory,
             state,
@@ -225,20 +228,40 @@ export class FarcasterInteractionManager {
                     }
 
                     elizaLogger.log("Sending NFT generation result cast");
-                    const results = await sendCast({
-                        runtime: this.runtime,
-                        client: this.client,
-                        profile: cast.author,
-                        content: {
-                            text: postContent,
-                        },
-                        roomId: memory.roomId,
-                        inReplyTo: {
-                            parentFid: cast.author.fid,
-                            parentHash: cast.hash,
-                        },
-                    });
-                    elizaLogger.log("Cast sent", results.cast);
+                    if (response.status === "SUCCESS") {
+                        const results = await sendCast({
+                            runtime: this.runtime,
+                            client: this.client,
+                            profile: cast.author,
+                            content: {
+                                text: postContent,
+                            },
+                            roomId: memory.roomId,
+                            inReplyTo: {
+                                parentFid: cast.author.fid,
+                                parentHash: cast.hash,
+                            },
+                            embeds: response.nftImageUrl
+                                ? [{ url: response.nftImageUrl as string }]
+                                : undefined,
+                        });
+                        elizaLogger.log("Cast sent", results.cast);
+                    } else {
+                        const results = await sendCast({
+                            runtime: this.runtime,
+                            client: this.client,
+                            profile: cast.author,
+                            content: {
+                                text: postContent,
+                            },
+                            roomId: memory.roomId,
+                            inReplyTo: {
+                                parentFid: cast.author.fid,
+                                parentHash: cast.hash,
+                            },
+                        });
+                        elizaLogger.log("Cast sent", results.cast);
+                    }
                 }
                 return [];
             },
@@ -255,6 +278,17 @@ export class FarcasterInteractionManager {
             );
             return { text: "Response Decision:", action: "IGNORE" };
         }
+
+        const shouldRespond = await generateShouldRespond({
+            runtime: this.runtime,
+            context: shouldRespondContext,
+            modelClass: ModelClass.SMALL,
+        });
+
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ shouldRespond:",
+            shouldRespond
+        );
 
         if (shouldRespond !== "RESPOND") {
             console.log("Not responding to message");
