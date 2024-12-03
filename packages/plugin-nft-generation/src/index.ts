@@ -5,6 +5,7 @@ import {
     EvaluationExample,
     Evaluator,
     generateObjectV2,
+    generateText,
     ModelClass,
 } from "@ai16z/eliza";
 import {
@@ -82,10 +83,27 @@ export const nftGenerationEvaluator: Evaluator = {
         }
         let imageUrl = _state.imageUrlInPost as string | undefined;
         if (!imageUrl) {
+            const keywordsResponse = await generateText({
+                runtime,
+                context: `
+                I want to create an NFT image using the following information, condense all descriptions into 8 words or fewer, not necessarily individual words, to create a more abstract visual representation for the generated image:
+Name: ${content.object.name},
+Description: ${content.object.description}
+                `,
+                modelClass: ModelClass.SMALL,
+            });
             imageUrl = await generateImage(
-                `please generate an image for this NFT: ${content.object.name} ${content.object.description}`,
+                `please generate an image for this NFT ${keywordsResponse.replaceAll('"', "")}`,
                 runtime.getSetting("EXACTLY_MODEL_ID") as string
             );
+        }
+        if (!imageUrl) {
+            elizaLogger.error(`Failed to generate NFT image`);
+            return callback({
+                text: `Failed to generate NFT, please try again later.`,
+                type: "GENERATE_NFT",
+                status: "FAILED",
+            });
         }
 
         try {

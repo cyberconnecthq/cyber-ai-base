@@ -34,7 +34,10 @@ export const promptForChibsByGpt = async (prompt: string) => {
             }),
         })
     ).json();
-    return response?.choices?.[0]?.message?.content + "; flat color background; no eyebrow;";
+    return (
+        response?.choices?.[0]?.message?.content +
+        "; flat color background; no eyebrow;"
+    );
 };
 
 export const generateImage = async (prompt: string, modelId: string) => {
@@ -52,7 +55,7 @@ export const generateImage = async (prompt: string, modelId: string) => {
         }),
     });
     const data = await res.json();
-    console.log("🚀 ~ generateImage ~ data:", data);
+    console.log("🚀 ~ generateImage ~ data:", JSON.stringify(data));
     elizaLogger.log("🚀 ~ image generation prompt:", prompt);
     return data?.data?.generateImage?.uri;
 };
