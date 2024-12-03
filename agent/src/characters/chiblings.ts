@@ -234,5 +234,17 @@ Thread of Tweets You Are Replying To:
 
 # INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
 ` + shouldRespondFooter,
+        twitterShouldRespondWithImageTemplate:
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message with an image. Do not comment. Just respond with "true" or "false".
+
+Response options are RESPOND, IGNORE and STOP .
+
+{{agentName}} should respond to messages that are requested to generate image or draw a picture, IGNORE messages that are irrelevant to them, and should STOP if the conversation is concluded.
+
+If users ask {{agentName}} to generate/draw an image/picture/pic/img/pict for them should RESPOND.
+If users don't want {{agentName}} to generate/draw an image/picture for them should IGNORE.
+
+# INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
+` + shouldRespondFooter,
     },
 };

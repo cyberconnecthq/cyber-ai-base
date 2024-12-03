@@ -634,6 +634,8 @@ export type Character = {
         discordVoiceHandlerTemplate?: string;
         discordShouldRespondTemplate?: string;
         discordMessageHandlerTemplate?: string;
+        shouldRespondWithImageTemplate?: string;
+        twitterShouldRespondWithImageTemplate?: string;
     };
 
     /** Character biography */
@@ -705,6 +707,7 @@ export type Character = {
         bio: string;
         nicknames?: string[];
     };
+    excactlyModelId?: string;
 };
 
 /**

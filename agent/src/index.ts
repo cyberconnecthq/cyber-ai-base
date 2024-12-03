@@ -24,8 +24,6 @@ import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { chiblings } from "./characters/chiblings.ts";
-import { yume } from "./characters/yume.ts";
 import yargs from "yargs";
 import * as agents from "./characters/index.ts";
 
@@ -237,10 +235,8 @@ const startAgents = async () => {
     const args = parseArguments();
 
     let charactersArg = args.characters || args.character || "";
-    console.log("🚀 ~ startAgents ~ charactersArg:", charactersArg);
 
     let characters = loadCharacters(charactersArg);
-    console.log("🚀 ~ startAgents ~ characters:", characters);
 
     if (characters.length === 0) {
         elizaLogger.error("No characters found");

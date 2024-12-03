@@ -458,7 +458,7 @@ export async function generateShouldRespond({
     let retryDelay = 1000;
     while (true) {
         try {
-            elizaLogger.log(
+            elizaLogger.debug(
                 "Attempting to generate text with context:",
                 context
             );
@@ -468,13 +468,13 @@ export async function generateShouldRespond({
                 modelClass,
             });
 
-            elizaLogger.log("Received response from generateText:", response);
+            elizaLogger.debug("Received response from generateText:", response);
             const parsedResponse = parseShouldRespondFromText(response.trim());
             if (parsedResponse) {
-                elizaLogger.log("Parsed response:", parsedResponse);
+                elizaLogger.debug("Parsed response:", parsedResponse);
                 return parsedResponse;
             } else {
-                elizaLogger.log("generateShouldRespond no response");
+                elizaLogger.debug("generateShouldRespond no response");
             }
         } catch (error) {
             elizaLogger.error("Error in generateShouldRespond:", error);

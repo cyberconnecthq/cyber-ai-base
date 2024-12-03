@@ -5,10 +5,10 @@ import {
     shouldRespondFooter,
 } from "@ai16z/eliza";
 import { loadCharacterEnv } from "../loadEnv.ts";
+const envs = loadCharacterEnv("yume") as any;
 import { nftGenerationPlugin } from "plugin-nft-generation";
 
-const envs = loadCharacterEnv("salad") as any;
-export const yume: Character = {
+export const salad: Character = {
     name: "Salad",
     username: "salad",
     plugins: [nftGenerationPlugin],
@@ -172,7 +172,6 @@ export const yume: Character = {
             "dive deeper into stuff when its interesting",
         ],
     },
-    excactlyModelId: "",
     templates: {
         twitterShouldRespondTemplate:
             `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".

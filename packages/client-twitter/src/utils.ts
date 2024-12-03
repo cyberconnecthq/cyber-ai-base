@@ -175,7 +175,7 @@ export async function sendTweet(
     roomId: UUID,
     twitterUsername: string,
     inReplyTo: string,
-    shouldRespondWithImage: boolean = false,
+    shouldRespondWithImage: boolean = false
 ): Promise<Memory[]> {
     const tweetChunks = splitTweetContent(content.text);
     const sentTweets: Tweet[] = [];
@@ -183,7 +183,8 @@ export async function sendTweet(
 
     for (const [index, chunk] of tweetChunks.entries()) {
         let body, result, imageResponse;
-        console.log("----------final function reply with image-----------");
+        console.log("----------send tweet-----------");
+        console.log(`----------${shouldRespondWithImage}-----------`);
         if (shouldRespondWithImage) {
             const imagePrompt = await promptForChibsByGpt(content.text);
             const image = await generateImage(

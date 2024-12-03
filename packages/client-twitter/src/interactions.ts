@@ -19,7 +19,7 @@ import {
     buildConversationThread,
     sendTweet,
     wait,
-    isBurnChibsTx,
+    // isBurnChibsTx,
 } from "./utils.ts";
 import { embeddingZeroVector } from "@ai16z/eliza";
 
@@ -87,34 +87,6 @@ Thread of Tweets You Are Replying To:
 # INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
 ` + shouldRespondFooter;
 
-export const twitterShouldRespondWithImageTemplate =
-    `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message with an image and participate in the conversation. Do not comment. Just respond with "true" or "false".
-
-Response options are RESPOND, IGNORE and STOP .
-
-{{agentName}} should respond to messages that are directed at them, or participate in conversations that are interesting or relevant to their background, IGNORE messages that are irrelevant to them, and should STOP if the conversation is concluded.
-
-If users want {{agentName}} to generate/draw an image/picture for them should RESPOND.
-{{agentName}} is in a room with other users and wants to be conversational, but not annoying.
-{{agentName}} should RESPOND to messages that are directed at them, or participate in conversations that are interesting or relevant to their background.
-If a message is not interesting or relevant, {{agentName}} should IGNORE.
-Unless directly RESPONDing to a user, {{agentName}} should IGNORE messages that are very short or do not contain much information.
-If a user asks {{agentName}} to stop talking, {{agentName}} should STOP.
-If {{agentName}} concludes a conversation and isn't part of the conversation anymore, {{agentName}} should STOP.
-
-{{recentPosts}}
-
-IMPORTANT: {{agentName}} (aka @{{twitterUserName}}) is particularly sensitive about being annoying, so if there is any doubt, it is better to IGNORE than to RESPOND.
-
-{{currentPost}}
-
-Thread of Tweets You Are Replying To:
-
-{{formattedConversation}}
-
-# INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
-` + shouldRespondFooter;
-
 export class TwitterInteractionClient {
     client: ClientBase;
     runtime: IAgentRuntime;
@@ -129,7 +101,8 @@ export class TwitterInteractionClient {
             this.handleTwitterInteractions();
             setTimeout(
                 handleTwitterInteractionsLoop,
-                (Math.floor(Math.random() * (5 - 2 + 1)) + 2) * 60 * 1000
+                // (Math.floor(Math.random() * (5 - 2 + 1)) + 2) * 60 * 1000
+                60000
             ); // Random interval between 2-5 minutes
         };
         handleTwitterInteractionsLoop();
@@ -239,9 +212,10 @@ export class TwitterInteractionClient {
         elizaLogger.log("Processing Tweet: ", tweet.id);
 
         // if there's a photo
-        for (let i = 0; i < tweet.photos.length; i++) {
-            console.log(tweet.photos[i].url);
-        }
+        const photos: string[] = [];
+        tweet.photos.map((photo) => {
+            photos.push(photo.url);
+        });
 
         const formatTweet = (tweet: Tweet) => {
             return `  ID: ${tweet.id}
@@ -336,7 +310,11 @@ export class TwitterInteractionClient {
 
         const shouldRespondWithImageContext = composeContext({
             state,
-            template: twitterShouldRespondWithImageTemplate,
+            template:
+                this.runtime.character.templates
+                    ?.twitterShouldRespondWithImageTemplate ||
+                this.runtime.character?.templates
+                    ?.shouldRespondWithImageTemplate,
         });
 
         const shouldRespond = await generateShouldRespond({
@@ -351,17 +329,17 @@ export class TwitterInteractionClient {
             modelClass: ModelClass.MEDIUM,
         });
 
-        const txHash = tweet.text.match(/0x[A-Fa-f0-9]{64}/)?.[0];
+        // const txHash = tweet.text.match(/0x[A-Fa-f0-9]{64}/)?.[0];
 
-        console.log("--- read tx hash === " + txHash);
-        console.log("--- tx hash cache=== " + this.client.cosumedTx);
-        let burnChibs = false;
-        if (txHash && !this.client.cosumedTx.includes?.(txHash)) {
-            burnChibs = await isBurnChibsTx(txHash);
-            this.client.cosumedTx.push(txHash);
-        }
+        // console.log("--- read tx hash === " + txHash);
+        // console.log("--- tx hash cache=== " + this.client.cosumedTx);
+        // let burnChibs = false;
+        // if (txHash && !this.client.cosumedTx.includes?.(txHash)) {
+        //     burnChibs = await isBurnChibsTx(txHash);
+        //     this.client.cosumedTx.push(txHash);
+        // }
 
-        console.log("--- has burnt chibs === " + burnChibs);
+        // console.log("--- has burnt chibs === " + burnChibs);
 
         console.log("----------shouldRespond-----------");
         console.log(`----------${shouldRespond}-----------`);
@@ -409,7 +387,7 @@ export class TwitterInteractionClient {
                         message.roomId,
                         this.runtime.getSetting("TWITTER_USERNAME"),
                         tweet.id,
-                        shouldRespondWithImage === "RESPOND" && burnChibs
+                        shouldRespondWithImage === "RESPOND"
                     );
                     return memories;
                 };
