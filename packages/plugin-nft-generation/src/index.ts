@@ -93,7 +93,9 @@ export const nftGenerationEvaluator: Evaluator = {
                 image: "",
             });
             return callback({
-                text: `Here is your generated NFT link! tokenId:${result.tokenId}, contractAddress:${result.contractAddress}`,
+                text: `Here is your generated NFT link! tokenId:${result.tokenId}, contractAddress:${result.contractAddress},
+                nftLink: ${`${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`}
+                `,
                 type: "GENERATE_NFT",
                 status: "SUCCESS",
                 nftLink: "https://www.example.com/image.jpg",
