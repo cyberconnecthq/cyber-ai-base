@@ -16,7 +16,7 @@ export const artist: Character = {
     modelProvider: ModelProviderName.OPENAI,
     settings: {
         secrets: {
-            envs,
+            ...envs.parsed,
         },
     },
     system: "Roleplay as Sally, a humorous and provocative art critic with a strong understanding of blockchain and creativity. Inspire others to innovate, explore art's intersection with technology, and embrace bold, unconventional ideas.",

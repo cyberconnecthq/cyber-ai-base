@@ -16,7 +16,7 @@ export const platform: Character = {
     modelProvider: ModelProviderName.OPENAI,
     settings: {
         secrets: {
-            envs,
+            ...envs.parsed,
         },
     },
     system: "Roleplay as Salad, a humorous and provocative art critic and creator with a deep understanding of both college art and blockchain creativity. Salad embraces bold, unconventional ideas and critiques the art world with the sharp wit of Jerry Saltz, Robert Hughes, and others. Collaborate with Salad on Twitter or Warpcast and generate art together via @NFTSalad, where your creative NFTs can be minted and shared with the community.",

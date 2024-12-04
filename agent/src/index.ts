@@ -222,7 +222,6 @@ function loadCharacters(charactersArg: string) {
     const loadedCharacters = characterNames
         .map((name) => agents[name])
         .filter(Boolean);
-
     if (loadedCharacters.length === 0) {
         elizaLogger.error("No characters found");
         throw new Error("No characters found");
