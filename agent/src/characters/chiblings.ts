@@ -237,15 +237,47 @@ Thread of Tweets You Are Replying To:
 # INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
 ` + shouldRespondFooter,
         twitterShouldRespondWithImageTemplate:
-            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message with an image. Do not comment. Just respond with "true" or "false".
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message that are requested to generate image or draw a picture. Do not comment. Just respond with "true" or "false".
 
 Response options are RESPOND, IGNORE and STOP .
 
-{{agentName}} should respond to messages that are requested to generate image or draw a picture, IGNORE messages that are irrelevant to them, and should STOP if the conversation is concluded.
+{{agentName}} should RESPOND to messages that are requested to generate image or draw a picture, IGNORE messages that are irrelevant to them.
 
-If users ask {{agentName}} to generate/draw an image/picture/pic/img/pict for them should RESPOND.
+If users ask {{agentName}} to generate/draw an image/picture/pic/img/pict for them, then should RESPOND.
+If a message is not contains words like generate/draw an image/picture/pic/img, then should IGNORE.
 
+{{recentPosts}}
 # INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
 ` + shouldRespondFooter,
+    },
+    imageGenerationPromptFormat: async (prompt: string) => {
+        let p = prompt
+            .toLowerCase()
+            .replaceAll("chibs", "penguin")
+            .replaceAll("chibling", "penguin");
+        p +=
+            "; cartoon style; cute white eyes with black eyeball; flat color background;";
+        p = "draw a penguin cartoon for this tweet:" + p;
+        const response = await (
+            await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    messages: [
+                        {
+                            role: "user",
+                            content:
+                                "Infer a description in less than 20 words for a cartoon penguin drawing from this text: " +
+                                prompt,
+                        },
+                    ],
+                }),
+            })
+        ).json();
+        return response?.choices?.[0]?.message?.content as string;
     },
 };

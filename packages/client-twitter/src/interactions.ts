@@ -383,13 +383,6 @@ export class TwitterInteractionClient {
             try {
                 const callback: HandlerCallback = async (response: Content) => {
                     let memories: Memory[];
-                    console.log(response.text);
-                    console.log(
-                        this.runtime.plugins.filter(
-                            (plugin) => plugin.name === "GENERATE_NFT"
-                        ).length > 0,
-                        " interactions.ts 391"
-                    );
                     if (
                         this.runtime.plugins.filter(
                             (plugin) => plugin.name === "GENERATE_NFT"
@@ -412,8 +405,7 @@ export class TwitterInteractionClient {
                                         this.runtime.getSetting(
                                             "TWITTER_USERNAME"
                                         ),
-                                        tweet.id,
-                                        false
+                                        tweet.id
                                     );
                                     if (memories) {
                                         resolve(memories);
@@ -437,8 +429,13 @@ export class TwitterInteractionClient {
                         message.roomId,
                         this.runtime.getSetting("TWITTER_USERNAME"),
                         tweet.id,
-                        shouldRespondWithImage === "RESPOND",
-                        this.runtime.character.exactlyModelId
+                        {
+                            shouldRespondWithImage:
+                                shouldRespondWithImage === "RESPOND",
+                            exatlyModelId:
+                                this.runtime.character.exactlyModelId,
+                            originTweet: tweet.text,
+                        }
                     );
                     return memories;
                 };

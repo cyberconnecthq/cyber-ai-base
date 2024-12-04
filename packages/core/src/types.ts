@@ -708,6 +708,7 @@ export type Character = {
         nicknames?: string[];
     };
     exactlyModelId?: string;
+    imageGenerationPromptFormat?: (prompt: string) => Promise<string>;
 };
 
 /**
