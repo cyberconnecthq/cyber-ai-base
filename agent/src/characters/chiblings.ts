@@ -254,7 +254,9 @@ If a message is not contains words like generate/draw an image/picture/pic/img, 
         let p = prompt
             .toLowerCase()
             .replaceAll("chibs", "penguin")
-            .replaceAll("chibling", "penguin");
+            .replaceAll("chib", "penguin")
+            .replaceAll("chibling", "penguin")
+            .replaceAll("chiblings", "penguin");
         p +=
             "; cartoon style; cute white eyes with black eyeball; flat color background;";
         p = "draw a penguin cartoon for this tweet:" + p;
