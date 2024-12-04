@@ -172,7 +172,7 @@ export const yume: Character = {
             "dive deeper into stuff when its interesting",
         ],
     },
-    excactlyModelId: "",
+    exactlyModelId: "",
     templates: {
         twitterShouldRespondTemplate:
             `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".

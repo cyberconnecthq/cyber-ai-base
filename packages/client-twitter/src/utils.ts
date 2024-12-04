@@ -4,12 +4,7 @@ import { Content, Memory, UUID } from "@ai16z/eliza";
 import { stringToUuid } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import { elizaLogger } from "@ai16z/eliza";
-import {
-    ChibsModelId,
-    generateImage,
-    promptForChibs,
-    promptForChibsByGpt,
-} from "@cyberlab/ai-external-serivce";
+import { generateImage, promptForByGpt } from "@cyberlab/ai-external-serivce";
 
 const MAX_TWEET_LENGTH = 280; // Updated to Twitter's current character limit
 
@@ -175,7 +170,8 @@ export async function sendTweet(
     roomId: UUID,
     twitterUsername: string,
     inReplyTo: string,
-    shouldRespondWithImage: boolean = false
+    shouldRespondWithImage: boolean = false,
+    exatlyModelId?: string
 ): Promise<Memory[]> {
     const tweetChunks = splitTweetContent(content.text);
     const sentTweets: Tweet[] = [];
@@ -184,13 +180,13 @@ export async function sendTweet(
     for (const [index, chunk] of tweetChunks.entries()) {
         let body, result, imageResponse;
         console.log("----------send tweet-----------");
-        console.log(`----------${shouldRespondWithImage}-----------`);
-        if (shouldRespondWithImage) {
-            const imagePrompt = await promptForChibsByGpt(content.text);
-            const image = await generateImage(
-                imagePrompt || promptForChibs(content.text),
-                ChibsModelId
-            );
+        console.log(
+            `----------${shouldRespondWithImage},${exatlyModelId}-----------`
+        );
+        if (shouldRespondWithImage && exatlyModelId) {
+            console.log("----------send tweet with image-----------");
+            const imagePrompt = await promptForByGpt(content.text);
+            const image = await generateImage(imagePrompt, exatlyModelId);
             imageResponse = image ? await fetch(image) : null;
             console.log(imageResponse);
         }

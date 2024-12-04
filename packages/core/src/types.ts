@@ -707,7 +707,7 @@ export type Character = {
         bio: string;
         nicknames?: string[];
     };
-    excactlyModelId?: string;
+    exactlyModelId?: string;
 };
 
 /**

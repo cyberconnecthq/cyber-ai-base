@@ -13,7 +13,7 @@ export const promptForChibs = (prompt: string) => {
     return p;
 };
 
-export const promptForChibsByGpt = async (prompt: string) => {
+export const promptForByGpt = async (prompt: string) => {
     const response = await (
         await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -27,7 +27,7 @@ export const promptForChibsByGpt = async (prompt: string) => {
                     {
                         role: "user",
                         content:
-                            "Infer a description in less than 20 words for a cartoon penguin drawing from this text: " +
+                            "Infer a description in less than 20 words for this text: " +
                             prompt,
                     },
                 ],

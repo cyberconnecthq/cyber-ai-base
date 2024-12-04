@@ -13,6 +13,7 @@ import {
     State,
     stringToUuid,
     elizaLogger,
+    Evaluator,
 } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import {
@@ -188,7 +189,6 @@ export class TwitterInteractionClient {
             elizaLogger.error("Error handling Twitter interactions:", error);
         }
     }
-
     private async handleTweet({
         tweet,
         message,
@@ -266,6 +266,7 @@ export class TwitterInteractionClient {
             currentPost,
             formattedConversation,
             timeline: formattedHomeTimeline,
+            imageUrlInPost: photos[0],
         });
 
         // check if the tweet exists, save if it doesn't
@@ -381,13 +382,52 @@ export class TwitterInteractionClient {
         if (response.text) {
             try {
                 const callback: HandlerCallback = async (response: Content) => {
-                    const memories = await sendTweet(
+                    let memories: Memory[];
+                    const evaluateRes = new Promise<Memory[]>(
+                        (resolve, reject) => {
+                            this.runtime.evaluate(
+                                message,
+                                state,
+                                false,
+                                async (response: Content) => {
+                                    console.log(
+                                        "🚀 ~ evaluationResult callback response:",
+                                        response
+                                    );
+                                    memories = await sendTweet(
+                                        this.client,
+                                        response,
+                                        message.roomId,
+                                        this.runtime.getSetting(
+                                            "TWITTER_USERNAME"
+                                        ),
+                                        tweet.id,
+                                        false
+                                    );
+                                    if (memories) {
+                                        resolve(memories);
+                                    } else {
+                                        reject([]);
+                                    }
+                                    return [];
+                                },
+                                (evaluator: Evaluator) =>
+                                    evaluator.name === "GENERATE_NFT"
+                            );
+                        }
+                    );
+
+                    memories = await evaluateRes;
+                    if (memories.length > 0) return memories;
+
+                    memories = await sendTweet(
                         this.client,
                         response,
                         message.roomId,
                         this.runtime.getSetting("TWITTER_USERNAME"),
                         tweet.id,
-                        shouldRespondWithImage === "RESPOND"
+                        shouldRespondWithImage === "RESPOND",
+                        this.runtime.character.exactlyModelId
                     );
                     return memories;
                 };
@@ -412,7 +452,15 @@ export class TwitterInteractionClient {
                     );
                 }
 
-                await this.runtime.evaluate(message, state);
+                await this.runtime.evaluate(
+                    message,
+                    state,
+                    true,
+                    undefined,
+                    (evaluator: Evaluator) => {
+                        return evaluator.name !== "GENERATE_NFT";
+                    }
+                );
 
                 await this.runtime.processActions(
                     message,
