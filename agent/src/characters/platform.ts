@@ -5,10 +5,10 @@ import {
     shouldRespondFooter,
 } from "@ai16z/eliza";
 import { loadCharacterEnv } from "../loadEnv.ts";
-const envs = loadCharacterEnv("yume") as any;
 import { nftGenerationPlugin } from "plugin-nft-generation";
 
-export const salad: Character = {
+const envs = loadCharacterEnv("platform") as any;
+export const platform: Character = {
     name: "Salad",
     username: "salad",
     plugins: [nftGenerationPlugin],

@@ -7,8 +7,8 @@ import {
 import { loadCharacterEnv } from "../loadEnv.ts";
 import { nftGenerationPlugin } from "plugin-nft-generation";
 
-const envs = loadCharacterEnv("Sally") as any;
-export const yume: Character = {
+const envs = loadCharacterEnv("artist") as any;
+export const artist: Character = {
     name: "Sally",
     username: "sally",
     plugins: [],
