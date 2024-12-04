@@ -184,7 +184,7 @@ export const artist: Character = {
             "dive deeper into stuff when its interesting",
         ],
     },
-    exactlyModelId: "",
+    exactlyModelId: envs.parsed?.EXACTLY_MODEL_ID,
     templates: {
         twitterShouldRespondTemplate:
             `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".

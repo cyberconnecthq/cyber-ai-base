@@ -244,6 +244,7 @@ const startAgents = async () => {
 
     try {
         for (const character of characters) {
+            console.log(character.settings.secrets);
             await startAgent(character);
         }
     } catch (error) {

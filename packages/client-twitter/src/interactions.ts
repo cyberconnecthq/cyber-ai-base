@@ -383,8 +383,19 @@ export class TwitterInteractionClient {
             try {
                 const callback: HandlerCallback = async (response: Content) => {
                     let memories: Memory[];
-                    const evaluateRes = new Promise<Memory[]>(
-                        (resolve, reject) => {
+                    console.log(response.text);
+                    console.log(
+                        this.runtime.plugins.filter(
+                            (plugin) => plugin.name === "GENERATE_NFT"
+                        ).length > 0,
+                        " interactions.ts 391"
+                    );
+                    if (
+                        this.runtime.plugins.filter(
+                            (plugin) => plugin.name === "GENERATE_NFT"
+                        ).length > 0
+                    ) {
+                        const evaluateRes = new Promise<Memory[]>((resolve) => {
                             this.runtime.evaluate(
                                 message,
                                 state,
@@ -407,18 +418,18 @@ export class TwitterInteractionClient {
                                     if (memories) {
                                         resolve(memories);
                                     } else {
-                                        reject([]);
+                                        resolve([]);
                                     }
                                     return [];
                                 },
                                 (evaluator: Evaluator) =>
                                     evaluator.name === "GENERATE_NFT"
                             );
-                        }
-                    );
-
-                    memories = await evaluateRes;
-                    if (memories.length > 0) return memories;
+                        });
+                        console.log(memories);
+                        memories = await evaluateRes;
+                        if (memories.length > 0) return memories;
+                    }
 
                     memories = await sendTweet(
                         this.client,
