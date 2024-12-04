@@ -259,7 +259,6 @@ If a message is not contains words like generate/draw an image/picture/pic/img, 
             .replaceAll("chiblings", "penguin");
         p +=
             "; cartoon style; cute white eyes with black eyeball; flat color background;";
-        p = "draw a penguin cartoon for this tweet:" + p;
         const response = await (
             await fetch("https://api.openai.com/v1/chat/completions", {
                 method: "POST",
@@ -273,8 +272,9 @@ If a message is not contains words like generate/draw an image/picture/pic/img, 
                         {
                             role: "user",
                             content:
+                                "# INSTRUCTIONS: All the subjects should always be PENGUIN. " +
                                 "Infer a description in less than 20 words for a cartoon penguin drawing from this text: " +
-                                prompt,
+                                p,
                         },
                     ],
                 }),
