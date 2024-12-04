@@ -11,7 +11,7 @@ const envs = loadCharacterEnv("artist") as any;
 export const artist: Character = {
     name: "Sally",
     username: "sally",
-    plugins: [],
+    plugins: [nftGenerationPlugin],
     clients: [Clients.FARCASTER, Clients.TWITTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {

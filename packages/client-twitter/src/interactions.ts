@@ -259,15 +259,16 @@ export class TwitterInteractionClient {
                     return `ID: ${tweet.id}\nFrom: ${tweet.name} (@${tweet.username})${tweet.inReplyToStatusId ? ` In reply to: ${tweet.inReplyToStatusId}` : ""}\nText: ${tweet.text}\n---\n`;
                 })
                 .join("\n");
-
+        // console.log("photo0", photos[0]);
         let state = await this.runtime.composeState(message, {
             twitterClient: this.client.twitterClient,
             twitterUserName: this.runtime.getSetting("TWITTER_USERNAME"),
             currentPost,
             formattedConversation,
             timeline: formattedHomeTimeline,
-            imageUrlInPost: photos[0],
+            imageUrlInPost: photos[0] || false,
         });
+        // console.log(state);
 
         // check if the tweet exists, save if it doesn't
         const tweetId = stringToUuid(tweet.id + "-" + this.runtime.agentId);
@@ -299,7 +300,6 @@ export class TwitterInteractionClient {
             };
             this.client.saveRequestMessage(message, state);
         }
-
         const shouldRespondContext = composeContext({
             state,
             template:
@@ -378,14 +378,13 @@ export class TwitterInteractionClient {
         response.inReplyTo = stringId;
 
         response.text = removeQuotes(response.text);
-
         if (response.text) {
             try {
                 const callback: HandlerCallback = async (response: Content) => {
                     let memories: Memory[];
                     if (
                         this.runtime.plugins.filter(
-                            (plugin) => plugin.name === "GENERATE_NFT"
+                            (plugin) => plugin.name === "nftGeneration"
                         ).length > 0
                     ) {
                         const evaluateRes = new Promise<Memory[]>((resolve) => {

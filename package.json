@@ -6,6 +6,7 @@
         "start:all": "pnpm --filter \"@ai16z/agent\" start:all --isRoot",
         "start:service:artist": "pnpm --filter \"@ai16z/agent\" start:service:artist --isRoot",
         "start:service:platform": "pnpm --filter \"@ai16z/agent\" start:service:platform --isRoot",
+        "start:service:chiblings": "pnpm --filter \"@ai16z/agent\" start:service:chiblings --isRoot",
         "stop:service:all": "pnpm --filter \"@ai16z/agent\" stop:service:all",
         "start": "pnpm --filter \"@ai16z/agent\" start --isRoot",
         "start:client": "pnpm --dir client start --isRoot",
