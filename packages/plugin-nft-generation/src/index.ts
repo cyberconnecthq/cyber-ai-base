@@ -131,7 +131,7 @@ Please update them and try again.
                 `,
                 type: "GENERATE_NFT",
                 status: "SUCCESS",
-                nftLink: "https://www.example.com/image.jpg",
+                nftLink: `${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`,
                 nftImageUrl: imageUrl,
             });
         } catch (error) {

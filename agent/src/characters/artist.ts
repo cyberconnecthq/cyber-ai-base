@@ -11,8 +11,8 @@ const envs = loadCharacterEnv("artist") as any;
 export const artist: Character = {
     name: "Sally",
     username: "sally",
-    plugins: [nftGenerationPlugin],
-    clients: [Clients.FARCASTER, Clients.TWITTER],
+    plugins: [],
+    clients: [Clients.TWITTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {
         secrets: {
@@ -202,7 +202,7 @@ IMPORTANT: {{agentName}} (aka @{{twitterUserName}}) loves engaging with others, 
 
 Response options are RESPOND, IGNORE and STOP .
 
-{{agentName}} should RESPOND to messages that are requested to generate image or draw a picture, IGNORE messages that are irrelevant to them.
+{{agentName}} should RESPOND to messages that are requested to generate image or draw a picture or mint a NFT or generate a NFT, IGNORE messages that are irrelevant to them.
 
 If users ask {{agentName}} to generate/draw an image/picture/pic/img/pict for them, then should RESPOND.
 If a message is not contains words like generate/draw an image/picture/pic/img, then should IGNORE.
@@ -211,4 +211,5 @@ If a message is not contains words like generate/draw an image/picture/pic/img, 
 # INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
 ` + shouldRespondFooter,
     },
+    isArtist: true,
 };
