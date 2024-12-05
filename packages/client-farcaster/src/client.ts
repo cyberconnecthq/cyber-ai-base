@@ -20,15 +20,7 @@ export class FarcasterClient {
     runtime: IAgentRuntime;
     farcaster: NeynarAPIClient;
 
-    cache: Map<string, any>;
-
-    constructor(opts: {
-        runtime: IAgentRuntime;
-        url: string;
-        ssl: boolean;
-        cache: Map<string, any>;
-    }) {
-        this.cache = opts.cache;
+    constructor(opts: { runtime: IAgentRuntime; url: string; ssl: boolean }) {
         this.runtime = opts.runtime;
         this.farcaster = new NeynarAPIClient({
             apiKey: this.runtime.getSetting("NEYNAR_API_KEY") as string,
@@ -91,8 +83,12 @@ export class FarcasterClient {
     // }
 
     async getCast(castHash: string): Promise<CastWithInteractions> {
-        if (this.cache.has(`farcaster/cast/${castHash}`)) {
-            return this.cache.get(`farcaster/cast/${castHash}`);
+        const cachedCast =
+            await this.runtime.cacheManager.get<CastWithInteractions>(
+                `farcaster/cast/${castHash}`
+            );
+        if (cachedCast) {
+            return cachedCast;
         }
 
         const result = await this.farcaster.fetchBulkCasts({
@@ -101,7 +97,7 @@ export class FarcasterClient {
 
         const cast = result.result.casts[0];
 
-        this.cache.set(`farcaster/cast/${castHash}`, cast);
+        this.runtime.cacheManager.set(`farcaster/cast/${castHash}`, cast);
 
         return cast;
     }
@@ -110,7 +106,10 @@ export class FarcasterClient {
         const response = await this.farcaster.fetchCastsForUser(request);
 
         response.casts.map((cast) => {
-            this.cache.set(`farcaster/cast/${toHex(cast.hash)}`, cast);
+            this.runtime.cacheManager.set(
+                `farcaster/cast/${toHex(cast.hash)}`,
+                cast
+            );
         });
 
         return response;
@@ -130,7 +129,7 @@ export class FarcasterClient {
 
         casts.map((cast) => {
             if (cast) {
-                this.cache.set(`farcaster/cast/${toHex(cast.hash)}`, cast);
+                this.runtime.cacheManager.set(`farcaster/cast/${toHex(cast.hash)}`, cast);
             }
         });
 
@@ -138,8 +137,9 @@ export class FarcasterClient {
     }
 
     async getProfile(fid: number): Promise<User> {
-        if (this.cache.has(`farcaster/profile/${fid}`)) {
-            return this.cache.get(`farcaster/profile/${fid}`) as User;
+        const cachedProfile = await this.runtime.cacheManager.get<User>(`farcaster/profile/${fid}`)
+        if (cachedProfile) {
+            return cachedProfile;
         }
 
         const result = await this.farcaster.fetchBulkUsers({
@@ -148,7 +148,7 @@ export class FarcasterClient {
 
         const profile = result.users[0];
 
-        this.cache.set(`farcaster/profile/${fid}`, profile);
+        this.runtime.cacheManager.set(`farcaster/profile/${fid}`, profile);
 
         return profile;
     }

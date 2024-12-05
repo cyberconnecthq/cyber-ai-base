@@ -3,7 +3,6 @@ import {
     messageCompletionFooter,
     shouldRespondFooter,
 } from "@ai16z/eliza";
-import type { Cast } from "./types";
 import { CastWithInteractions } from "@neynar/nodejs-sdk/build/api/index.js";
 
 export const formatCast = (cast: CastWithInteractions) => {

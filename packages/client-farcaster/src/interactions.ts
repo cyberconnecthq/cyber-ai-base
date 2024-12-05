@@ -39,8 +39,7 @@ export class FarcasterInteractionManager {
     private timeout: NodeJS.Timeout | undefined;
     constructor(
         public client: FarcasterClient,
-        public runtime: IAgentRuntime,
-        public cache: Map<string, any>
+        public runtime: IAgentRuntime
     ) {}
 
     public async start() {
@@ -142,11 +141,14 @@ export class FarcasterInteractionManager {
             return { text: "", action: "IGNORE" };
         }
 
-        if (this.cache.has(`farcaster/cast_interaction_handled/${cast.hash}`)) {
+        const castHandled = await this.runtime.cacheManager.get(
+            `farcaster/cast_interaction_handled/${cast.hash}`
+        );
+        if (castHandled) {
             console.log("skipping cast already handled", cast.hash);
             return;
         } else {
-            this.cache.set(
+            this.runtime.cacheManager.set(
                 `farcaster/cast_interaction_handled/${cast.hash}`,
                 true
             );
@@ -228,8 +230,14 @@ export class FarcasterInteractionManager {
                     }
 
                     elizaLogger.log("Sending NFT generation result cast");
+                    let results:
+                        | {
+                              memory: Memory;
+                              cast: CastWithInteractions;
+                          }
+                        | undefined;
                     if (response.status === "SUCCESS") {
-                        const results = await sendCast({
+                        results = await sendCast({
                             runtime: this.runtime,
                             client: this.client,
                             profile: cast.author,
@@ -247,7 +255,7 @@ export class FarcasterInteractionManager {
                         });
                         elizaLogger.log("Cast sent", results.cast);
                     } else {
-                        const results = await sendCast({
+                        results = await sendCast({
                             runtime: this.runtime,
                             client: this.client,
                             profile: cast.author,
@@ -262,6 +270,10 @@ export class FarcasterInteractionManager {
                         });
                         elizaLogger.log("Cast sent", results.cast);
                     }
+                    this.runtime.cacheManager.set(
+                        `farcaster/nft_generation_${results?.cast.hash}`,
+                        results
+                    );
                 }
                 return [];
             },

@@ -17,7 +17,6 @@ export class FarcasterPostManager {
     constructor(
         public client: FarcasterClient,
         public runtime: IAgentRuntime,
-        public cache: Map<string, any>
     ) {}
 
     public async start() {
@@ -63,7 +62,7 @@ export class FarcasterPostManager {
                 pageSize: 10,
             });
 
-            this.cache.set("farcaster/timeline", timeline);
+            this.runtime.cacheManager.set("farcaster/timeline", timeline);
 
             const formattedHomeTimeline = formatTimeline(
                 this.runtime.character,
