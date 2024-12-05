@@ -382,6 +382,7 @@ export class TwitterInteractionClient {
             try {
                 const callback: HandlerCallback = async (response: Content) => {
                     let memories: Memory[];
+                    // specific for platform
                     if (
                         this.runtime.plugins.filter(
                             (plugin) => plugin.name === "nftGeneration"
@@ -434,7 +435,9 @@ export class TwitterInteractionClient {
                             exatlyModelId:
                                 this.runtime.character.exactlyModelId,
                             originTweet: tweet.text,
-                        }
+                        },
+                        this.runtime.character.isArtist,
+                        state
                     );
                     return memories;
                 };

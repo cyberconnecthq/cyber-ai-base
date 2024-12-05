@@ -1,10 +1,17 @@
 import { Tweet } from "agent-twitter-client";
-import { embeddingZeroVector } from "@ai16z/eliza";
-import { Content, Memory, UUID } from "@ai16z/eliza";
+import {
+    composeContext,
+    embeddingZeroVector,
+    generateObjectV2,
+    generateText,
+    State,
+} from "@ai16z/eliza";
+import { Content, Memory, UUID, ModelClass } from "@ai16z/eliza";
 import { stringToUuid } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import { elizaLogger } from "@ai16z/eliza";
 import { generateImage, promptByGpt } from "@cyberlab/ai-external-serivce";
+import { z } from "zod";
 
 const MAX_TWEET_LENGTH = 280; // Updated to Twitter's current character limit
 
@@ -178,7 +185,9 @@ export async function sendTweet(
         shouldRespondWithImage: false,
         exatlyModelId: "",
         originTweet: "",
-    }
+    },
+    isArtist?: boolean,
+    state?: State
 ): Promise<Memory[]> {
     const tweetChunks = splitTweetContent(content.text);
     const sentTweets: Tweet[] = [];
@@ -187,11 +196,17 @@ export async function sendTweet(
     for (const [index, chunk] of tweetChunks.entries()) {
         let body, result, imageResponse;
         console.log("----------send tweet-----------");
-        console.log(
-            `----------${imageParams.shouldRespondWithImage},${imageParams.exatlyModelId}-----------`
-        );
-        if (imageParams.shouldRespondWithImage && imageParams.exatlyModelId) {
-            console.log("----------send tweet with image-----------");
+        const dailyImageCount =
+            ((await client.runtime.cacheManager.get(
+                "daily_image_count"
+            )) as number) || 0;
+        console.log(dailyImageCount);
+        if (
+            imageParams.shouldRespondWithImage &&
+            imageParams.exatlyModelId &&
+            dailyImageCount < 50
+        ) {
+            console.log("----------GENERATE IMAGE-----------");
             const imagePrompt = client.runtime.character
                 .imageGenerationPromptFormat
                 ? await client.runtime.character.imageGenerationPromptFormat(
@@ -203,12 +218,17 @@ export async function sendTweet(
                 imageParams.exatlyModelId
             );
             imageResponse = image ? await fetch(image) : null;
-            console.log(imageResponse);
+            client.runtime.cacheManager.set(
+                "daily_image_count",
+                dailyImageCount + 1
+            );
         }
         const buffer = imageResponse?.ok
             ? Buffer.from(await imageResponse.arrayBuffer())
             : null;
+
         if (index === tweetChunks.length - 1 && buffer) {
+            console.log("----------send tweet with image-----------");
             result = await client.requestQueue.add(
                 async () =>
                     await client.twitterClient.sendTweetWithMedia(
@@ -217,6 +237,19 @@ export async function sendTweet(
                         previousTweetId
                     )
             );
+
+            await wait(2000);
+
+            if (isArtist) {
+                console.log("----------Artist call platform-----------");
+                const artistCallRes =
+                    await client.twitterClient.sendTweetWithMedia(
+                        await makeTagPlatformTweet({ client, state }),
+                        [buffer],
+                        previousTweetId
+                    );
+                console.log(await artistCallRes.json());
+            }
         } else {
             result = await client.requestQueue.add(
                 async () =>
@@ -396,4 +429,54 @@ export const isBurnChibsTx = async (tx: string) => {
 
     return false;
 };
-// function getImagesFrom
+
+export const extractNftParamsTemplate = `
+Extract NFT creation params from the recent messages:
+
+{{recentMessages}}
+`;
+
+export const NftCreationParamsSchema = z.object({
+    name: z.string({
+        description: "The name of the NFT",
+    }),
+    description: z.string({
+        description: "The description of the NFT",
+    }),
+    creatorAddress: z.string({
+        description: "The address of the creator of the NFT",
+    }),
+});
+
+export async function makeTagPlatformTweet({
+    client,
+    state,
+}: {
+    client: ClientBase;
+    state: State;
+}) {
+    const context = composeContext({
+        state,
+        template: extractNftParamsTemplate,
+    });
+    try {
+        const content: any = await generateObjectV2({
+            runtime: client.runtime,
+            context,
+            // @ts-expect-error there was an type error in source code here
+            modelClass: ModelClass.SMALL,
+            schema: NftCreationParamsSchema,
+        });
+        console.log(content);
+
+        const template = `@${process.env.PLATFORM_TWITTER_USERNAME} please create a NFT for me. name:${content.object.name} desc:${content.object.description} creator address:${content.object.creatorAddress}`;
+        return await generateText({
+            runtime: client.runtime,
+            context: `please shortern this text to meet the twitter's post tweet limit to 270 words, #IMPORTANT: just shorten the desc, the addresses MUST NOT be changed.
+            "${template}"`,
+            modelClass: ModelClass.SMALL,
+        });
+    } catch (e) {
+        elizaLogger.error(`Failed to generate NFT. Error: ${e}`);
+    }
+}

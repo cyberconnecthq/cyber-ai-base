@@ -638,6 +638,8 @@ export type Character = {
         twitterShouldRespondWithImageTemplate?: string;
     };
 
+    isArtist?: boolean;
+
     /** Character biography */
     bio: string | string[];
 
