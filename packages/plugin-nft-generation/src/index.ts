@@ -5,7 +5,6 @@ import {
     EvaluationExample,
     Evaluator,
     generateObjectV2,
-    generateText,
     ModelClass,
 } from "@ai16z/eliza";
 import {
@@ -17,7 +16,7 @@ import {
 } from "@ai16z/eliza";
 import { extractNftParamsTemplate } from "./extractNftParamsTemplate";
 import { isNftCreationParams, NftCreationParamsSchema } from "./types";
-import { createCollection, generateImage } from "@cyberlab/ai-external-serivce";
+import { createCollection } from "@cyberlab/ai-external-serivce";
 
 function validateUrl(url: string): boolean {
     try {
@@ -41,8 +40,6 @@ export const nftGenerationEvaluator: Evaluator = {
     description:
         "Read the message and see if the message contain necessary information (name, description and creator address) to generate a NFT, if yes return true else false",
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        // elizaLogger.log("Validating nft generation action");
-        // return !!lumaApiKey;
         const text = message.content.text.toLocaleLowerCase();
         return (
             text.includes("nft") ||
@@ -78,43 +75,39 @@ export const nftGenerationEvaluator: Evaluator = {
         } catch (e) {
             elizaLogger.error(`Failed to generate NFT. Error: ${e}`);
         }
-        console.log("🚀 ~ content:", content);
+        console.log("🚀 ~ generated params from post:", content);
 
         if (!isNftCreationParams(content?.object)) {
             callback({
-                text: "Could you please provide more details about the nft you'd like me to generate? It should contain a name, description, and creator address.",
+                text: `
+Missing Information!
+
+Please confirm that you have provided the following:
+
+- EVM Address: Ensure you have submitted a valid EVM address to earn rewards.
+- Image: Make sure you have uploaded an image for your NFT.
+- Title: Check that you have provided a title for your NFT.
+
+Please update them and try again.
+                `,
                 type: "GENERATE_NFT",
                 status: "FAILED",
             });
             return;
         }
 
-        let imageUrl: string | false = validateUrl(
+        const imageUrl: string | false = validateUrl(
             _state.imageUrlInPost as string
         )
             ? (_state.imageUrlInPost as string)
             : false;
 
+        const coCreator = _state.aiArtistAddress as string | undefined;
+
         if (!imageUrl) {
-            const keywordsResponse = await generateText({
-                runtime,
-                context: `
-                I want to create an NFT image using the following information, condense all descriptions into 8 words or fewer, not necessarily individual words, to create a more abstract visual representation for the generated image:
-Name: ${content.object.name},
-Description: ${content.object.description}
-                `,
-                modelClass: ModelClass.SMALL,
-            });
-            imageUrl = await generateImage(
-                `please generate an image for this NFT ${keywordsResponse.replaceAll('"', "")}`,
-                runtime.character.exactlyModelId ||
-                    runtime.getSetting("EXACTLY_MODEL_ID")
-            );
-        }
-        if (!imageUrl) {
-            elizaLogger.error(`Failed to generate NFT image`);
+            elizaLogger.error(`did not get image url from the post`);
             return callback({
-                text: `Failed to generate NFT, please try again later.`,
+                text: `Please provide an image to generate the NFT`,
                 type: "GENERATE_NFT",
                 status: "FAILED",
             });
@@ -130,9 +123,11 @@ Description: ${content.object.description}
                 description: content.object.description,
                 creator: content.object.creatorAddress,
                 image: imageUrl,
+                coCreator,
             });
             return callback?.({
-                text: `Here is your generated NFT link! tokenId:${result.tokenId}, contractAddress:${result.contractAddress}, NFT: ${`${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`}
+                text: `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!,
+                ${`${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`}
                 `,
                 type: "GENERATE_NFT",
                 status: "SUCCESS",

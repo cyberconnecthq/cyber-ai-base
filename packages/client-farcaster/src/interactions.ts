@@ -26,6 +26,14 @@ import {
     User,
 } from "@neynar/nodejs-sdk/build/api/index.js";
 
+const AIArtist: { userName: string; address: string; fid: number }[] = [
+    {
+        fid: 888116,
+        address: "0x796321ec356026FD4b3b3910dBAFBc434C252006",
+        userName: "wayne-liberty",
+    },
+];
+
 function extractImageUrlFromEmbed(embed?: Embed) {
     if (!embed) return null;
     if ("url" in embed) {
@@ -173,11 +181,16 @@ export class FarcasterInteractionManager {
         const imageUrl = extractImageUrlFromEmbed(cast.embeds?.[0]);
         console.log("🚀 ~ FarcasterInteractionManager ~ imageUrl:", imageUrl);
 
+        const aiArtistAddress = AIArtist.find(
+            (artist) => artist.userName === cast.author.username
+        )?.address;
+
         const state = await this.runtime.composeState(memory, {
             farcasterUsername: agent.username,
             timeline: formattedTimeline,
             currentPost,
             imageUrlInPost: imageUrl,
+            aiArtistAddress,
         });
 
         const shouldRespondContext = composeContext({
