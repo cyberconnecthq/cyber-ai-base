@@ -40,8 +40,6 @@ export const nftGenerationEvaluator: Evaluator = {
     description:
         "Read the message and see if the message contain necessary information (name, description and creator address) to generate a NFT, if yes return true else false",
     validate: async (runtime: IAgentRuntime, message: Memory) => {
-        // elizaLogger.log("Validating nft generation action");
-        // return !!lumaApiKey;
         const text = message.content.text.toLocaleLowerCase();
         return (
             text.includes("nft") ||
@@ -77,7 +75,7 @@ export const nftGenerationEvaluator: Evaluator = {
         } catch (e) {
             elizaLogger.error(`Failed to generate NFT. Error: ${e}`);
         }
-        console.log("🚀 ~ content:", content);
+        console.log("🚀 ~ generated params from post:", content);
 
         if (!isNftCreationParams(content?.object)) {
             callback({
@@ -104,24 +102,8 @@ Please update them and try again.
             ? (_state.imageUrlInPost as string)
             : false;
 
-        const coCreator: string | undefined = _state.aiArtistAddress;
+        const coCreator = _state.aiArtistAddress as string | undefined;
 
-        // if (!imageUrl) {
-        //             const keywordsResponse = await generateText({
-        //                 runtime,
-        //                 context: `
-        //                 I want to create an NFT image using the following information, condense all descriptions into 8 words or fewer, not necessarily individual words, to create a more abstract visual representation for the generated image:
-        // Name: ${content.object.name},
-        // Description: ${content.object.description}
-        //                 `,
-        //                 modelClass: ModelClass.SMALL,
-        //             });
-        //             imageUrl = await generateImage(
-        //                 `please generate an image for this NFT ${keywordsResponse.replaceAll('"', "")}`,
-        //                 runtime.character.exactlyModelId ||
-        //                     runtime.getSetting("EXACTLY_MODEL_ID")
-        //             );
-        // }
         if (!imageUrl) {
             elizaLogger.error(`did not get image url from the post`);
             return callback({

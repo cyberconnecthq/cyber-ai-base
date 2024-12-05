@@ -26,7 +26,13 @@ import {
     User,
 } from "@neynar/nodejs-sdk/build/api/index.js";
 
-const AIArtist: { userName: string; address: string }[] = [];
+const AIArtist: { userName: string; address: string; fid: number }[] = [
+    {
+        fid: 888116,
+        address: "0x796321ec356026FD4b3b3910dBAFBc434C252006",
+        userName: "wayne-liberty",
+    },
+];
 
 function extractImageUrlFromEmbed(embed?: Embed) {
     if (!embed) return null;
