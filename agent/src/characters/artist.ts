@@ -12,7 +12,7 @@ export const artist: Character = {
     name: "Sally",
     username: "sally",
     plugins: [],
-    clients: [Clients.FARCASTER],
+    clients: [Clients.TWITTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {
         secrets: {
@@ -198,7 +198,7 @@ If {{agentName}} concludes a conversation and isn't part of it anymore, {{agentN
 IMPORTANT: {{agentName}} (aka @{{twitterUserName}}) loves engaging with others, so unless the message is disrespectful or harmful, she will almost always RESPOND. If unsure, RESPOND is always the best choice over IGNORE.` +
             shouldRespondFooter,
         twitterShouldRespondWithImageTemplate:
-            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message that are requested to generate image or draw a picture. Do not comment. .
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message that are requested to generate image or draw a picture. Do not comment.
 
 Response options are RESPOND, IGNORE and STOP .
 
@@ -212,4 +212,5 @@ If a message is not contains words like generate/draw an image/picture/pic/img, 
 ` + shouldRespondFooter,
     },
     isArtist: true,
+    dailyImageLimit: 30,
 };

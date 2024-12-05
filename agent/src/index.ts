@@ -179,7 +179,6 @@ function intializeDbCache(character: Character, db: IDatabaseCacheAdapter) {
     const cache = new CacheManager(new DbCacheAdapter(db, character.id));
     return cache;
 }
-
 async function startAgent(character: Character, directClient?) {
     try {
         character.id ??= stringToUuid(character.name);

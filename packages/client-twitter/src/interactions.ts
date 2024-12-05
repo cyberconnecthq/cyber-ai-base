@@ -62,7 +62,7 @@ Thread of Tweets You Are Replying To:
 ` + messageCompletionFooter;
 
 export const twitterShouldRespondTemplate =
-    `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. .
+    `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment.
 
 Response options are RESPOND, IGNORE and STOP .
 
@@ -111,7 +111,6 @@ export class TwitterInteractionClient {
 
     async handleTwitterInteractions() {
         elizaLogger.log("Checking Twitter interactions");
-
         const twitterUsername = this.client.profile.username;
         try {
             // Check for mentionsx
@@ -123,7 +122,7 @@ export class TwitterInteractionClient {
                 )
             ).tweets;
 
-            // elizaLogger.log("search result: ", tweetCandidates);
+            elizaLogger.log("search result: ", tweetCandidates);
 
             // de-duplicate tweetCandidates with a set
             const uniqueTweetCandidates = [...new Set(tweetCandidates)];
@@ -260,6 +259,7 @@ export class TwitterInteractionClient {
                 })
                 .join("\n");
         // console.log("photo0", photos[0]);
+        console.log(tweet.username.toLocaleLowerCase());
         let state = await this.runtime.composeState(message, {
             twitterClient: this.client.twitterClient,
             twitterUserName: this.runtime.getSetting("TWITTER_USERNAME"),
@@ -267,6 +267,11 @@ export class TwitterInteractionClient {
             formattedConversation,
             timeline: formattedHomeTimeline,
             imageUrlInPost: photos[0] || false,
+            // if the post is from artist
+            coCreator:
+                tweet.username === process.env.ARTIST_TWITTER_USERNAME
+                    ? "0x796321ec356026FD4b3b3910dBAFBc434C252006"
+                    : undefined,
         });
         // console.log(state);
 
@@ -353,6 +358,10 @@ export class TwitterInteractionClient {
             return { text: "Response Decision:", action: shouldRespond };
         }
 
+        if (tweet.username === process.env.PLATFORM_TWITTER_USERNAME) {
+            return { text: "Response Decision:", action: "STOP" };
+        }
+
         const context = composeContext({
             state,
             template:
@@ -389,36 +398,49 @@ export class TwitterInteractionClient {
                         ).length > 0
                     ) {
                         const evaluateRes = new Promise<Memory[]>((resolve) => {
-                            this.runtime.evaluate(
-                                message,
-                                state,
-                                false,
-                                async (response: Content) => {
-                                    console.log(
-                                        "🚀 ~ evaluationResult callback response:",
-                                        response
-                                    );
-                                    memories = await sendTweet(
-                                        this.client,
-                                        response,
-                                        message.roomId,
-                                        this.runtime.getSetting(
-                                            "TWITTER_USERNAME"
-                                        ),
-                                        tweet.id
-                                    );
-                                    if (memories) {
-                                        resolve(memories);
+                            this.runtime
+                                .evaluate(
+                                    message,
+                                    state,
+                                    false,
+                                    async (response: Content) => {
+                                        console.log(
+                                            "🚀 ~ evaluationResult callback response:",
+                                            response
+                                        );
+                                        memories = await sendTweet(
+                                            this.client,
+                                            response,
+                                            message.roomId,
+                                            this.runtime.getSetting(
+                                                "TWITTER_USERNAME"
+                                            ),
+                                            tweet.id
+                                        );
+                                        if (memories) {
+                                            resolve(memories);
+                                        } else {
+                                            resolve([]);
+                                        }
+                                        return [];
+                                    },
+                                    (evaluator: Evaluator) =>
+                                        evaluator.name === "GENERATE_NFT"
+                                )
+                                .then((evaluatorToRun) => {
+                                    if (
+                                        evaluatorToRun.includes("GENERATE_NFT")
+                                    ) {
+                                        // runing nft-generation
+                                        console.log("runing nft-generation");
                                     } else {
+                                        console.log(
+                                            "not runing nft-generation"
+                                        );
                                         resolve([]);
                                     }
-                                    return [];
-                                },
-                                (evaluator: Evaluator) =>
-                                    evaluator.name === "GENERATE_NFT"
-                            );
+                                });
                         });
-                        console.log(memories);
                         memories = await evaluateRes;
                         if (memories.length > 0) return memories;
                     }
@@ -493,7 +515,7 @@ export class TwitterInteractionClient {
 
     async buildConversationThread(
         tweet: Tweet,
-        maxReplies: number = 10
+        maxReplies: number = 4
     ): Promise<Tweet[]> {
         const thread: Tweet[] = [];
         const visited: Set<string> = new Set();

@@ -39,7 +39,7 @@ export const isValidTweet = (tweet: Tweet): boolean => {
 export async function buildConversationThread(
     tweet: Tweet,
     client: ClientBase,
-    maxReplies: number = 10
+    maxReplies: number = 4
 ): Promise<Tweet[]> {
     const thread: Tweet[] = [];
     const visited: Set<string> = new Set();
@@ -158,7 +158,7 @@ export async function buildConversationThread(
         }
     }
 
-    await processThread(tweet, 0);
+    await processThread(tweet, 1);
 
     elizaLogger.debug("Final thread built:", {
         totalTweets: thread.length,
@@ -198,13 +198,13 @@ export async function sendTweet(
         console.log("----------send tweet-----------");
         const dailyImageCount =
             ((await client.runtime.cacheManager.get(
-                "daily_image_count"
+                "daily_image_count/" + twitterUsername
             )) as number) || 0;
         console.log(dailyImageCount);
         if (
             imageParams.shouldRespondWithImage &&
             imageParams.exatlyModelId &&
-            dailyImageCount < 50
+            dailyImageCount < client.runtime.character.dailyImageLimit
         ) {
             console.log("----------GENERATE IMAGE-----------");
             const imagePrompt = client.runtime.character
@@ -219,8 +219,9 @@ export async function sendTweet(
             );
             imageResponse = image ? await fetch(image) : null;
             client.runtime.cacheManager.set(
-                "daily_image_count",
-                dailyImageCount + 1
+                "daily_image_count/" + twitterUsername,
+                dailyImageCount + 1,
+                { expires: dailyImageCount === 0 ? 0 : getTomorrowTimeStamp() }
             );
         }
         const buffer = imageResponse?.ok
@@ -228,28 +229,29 @@ export async function sendTweet(
             : null;
 
         if (index === tweetChunks.length - 1 && buffer) {
-            console.log("----------send tweet with image-----------");
-            result = await client.requestQueue.add(
-                async () =>
-                    await client.twitterClient.sendTweetWithMedia(
-                        chunk.trim(),
-                        [buffer],
-                        previousTweetId
-                    )
-            );
-
-            await wait(2000);
-
             if (isArtist) {
                 console.log("----------Artist call platform-----------");
-                const artistCallRes =
-                    await client.twitterClient.sendTweetWithMedia(
-                        await makeTagPlatformTweet({ client, state }),
-                        [buffer],
-                        previousTweetId
-                    );
-                console.log(await artistCallRes.json());
+                result = await client.requestQueue.add(
+                    async () =>
+                        await client.twitterClient.sendTweetWithMedia(
+                            await makeTagPlatformTweet({ client, state }),
+                            [buffer],
+                            previousTweetId
+                        )
+                );
+            } else {
+                console.log("----------send tweet with image-----------");
+                result = await client.requestQueue.add(
+                    async () =>
+                        await client.twitterClient.sendTweetWithMedia(
+                            chunk.trim(),
+                            [buffer],
+                            previousTweetId
+                        )
+                );
             }
+
+            await wait(2000);
         } else {
             result = await client.requestQueue.add(
                 async () =>
@@ -469,14 +471,21 @@ export async function makeTagPlatformTweet({
         });
         console.log(content);
 
-        const template = `@${process.env.PLATFORM_TWITTER_USERNAME} please create a NFT for me. name:${content.object.name} desc:${content.object.description} creator address:${content.object.creatorAddress}`;
+        const template = `@${process.env.PLATFORM_TWITTER_USERNAME}  please create a NFT for me. name:${content.object.name} desc:${content.object.description} creator address:${content.object.creatorAddress}`;
         return await generateText({
             runtime: client.runtime,
-            context: `please shortern this text to meet the twitter's post tweet limit to 270 words, #IMPORTANT: just shorten the desc, the addresses MUST NOT be changed.
-            "${template}"`,
+            context: `please shortern this text to meet the twitter's post tweet limit to 270 words, #IMPORTANT: just shorten the desc, the addresses MUST NOT be changed; no commentary or additional information should be included.
+            ${template}`,
             modelClass: ModelClass.SMALL,
         });
     } catch (e) {
         elizaLogger.error(`Failed to generate NFT. Error: ${e}`);
     }
+}
+function getTomorrowTimeStamp() {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return tomorrow.getTime();
 }
