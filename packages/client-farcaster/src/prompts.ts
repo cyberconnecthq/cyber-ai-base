@@ -50,13 +50,13 @@ export const messageHandlerTemplate =
 Recent interactions between {{agentName}} and other users:
 {{recentPostInteractions}}
 
-# Task: Generate a post in the voice, style and perspective of {{agentName}} (@{{twitterUserName}}):
+# Task: Generate a post in the voice, style and perspective of {{agentName}} (@{{farcasterUserName}}):
 {{currentPost}}` +
     messageCompletionFooter;
 
 export const shouldRespondTemplate =
     //
-    `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
+    `# INSTRUCTIONS: Determine if {{agentName}} (@{{farcasterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
 
 Response options are RESPOND, IGNORE and STOP.
 
@@ -71,7 +71,7 @@ If {{agentName}} concludes a conversation and isn't part of the conversation any
 
 {{recentPosts}}
 
-IMPORTANT: {{agentName}} (aka @{{twitterUserName}}) is particularly sensitive about being annoying, so if there is any doubt, it is better to IGNORE than to RESPOND.
+IMPORTANT: {{agentName}} (aka @{{farcasterUserName}}) is particularly sensitive about being annoying, so if there is any doubt, it is better to IGNORE than to RESPOND.
 
 {{currentPost}}
 

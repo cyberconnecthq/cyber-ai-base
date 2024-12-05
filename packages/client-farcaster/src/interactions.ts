@@ -4,7 +4,9 @@ import {
     elizaLogger,
     Evaluator,
     generateMessageResponse,
+    generateObjectV2,
     generateShouldRespond,
+    generateText,
     Memory,
     ModelClass,
     stringToUuid,
@@ -25,6 +27,8 @@ import {
     Embed,
     User,
 } from "@neynar/nodejs-sdk/build/api/index.js";
+import { generateImage } from "@cyberlab/ai-external-serivce";
+import { isNftCreationParams, NftCreationParamsSchema } from "./types";
 
 const AIArtist: { userName: string; address: string; fid: number }[] = [
     {
@@ -110,10 +114,6 @@ export class FarcasterInteractionManager {
                 runtime: this.runtime,
                 cast,
             });
-            console.log(
-                "🚀 ~ FarcasterInteractionManager ~ handleInteractions ~ thread:",
-                thread
-            );
 
             const memory: Memory = {
                 content: { text: cast.text },
@@ -181,30 +181,17 @@ export class FarcasterInteractionManager {
         const imageUrl = extractImageUrlFromEmbed(cast.embeds?.[0]);
         console.log("🚀 ~ FarcasterInteractionManager ~ imageUrl:", imageUrl);
 
-        const aiArtistAddress = AIArtist.find(
+        const aiArtist = AIArtist.find(
             (artist) => artist.userName === cast.author.username
-        )?.address;
+        );
 
         const state = await this.runtime.composeState(memory, {
             farcasterUsername: agent.username,
             timeline: formattedTimeline,
             currentPost,
             imageUrlInPost: imageUrl,
-            aiArtistAddress,
+            aiArtistAddress: aiArtist?.address,
         });
-
-        const shouldRespondContext = composeContext({
-            state,
-            template:
-                this.runtime.character.templates
-                    ?.farcasterShouldRespondTemplate ||
-                this.runtime.character?.templates?.shouldRespondTemplate ||
-                shouldRespondTemplate,
-        });
-        console.log(
-            "🚀 ~ FarcasterInteractionManager ~ shouldRespondContext:",
-            shouldRespondContext
-        );
 
         const memoryId = castUuid({
             agentId: this.runtime.agentId,
@@ -304,20 +291,67 @@ export class FarcasterInteractionManager {
             return { text: "Response Decision:", action: "IGNORE" };
         }
 
+        const shouldRespondContext = composeContext({
+            state,
+            template:
+                this.runtime.character.templates
+                    ?.twitterShouldRespondTemplate ||
+                this.runtime.character?.templates?.shouldRespondTemplate ||
+                shouldRespondTemplate,
+        });
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ shouldRespondContext:",
+            shouldRespondContext
+        );
+
         const shouldRespond = await generateShouldRespond({
             runtime: this.runtime,
             context: shouldRespondContext,
             modelClass: ModelClass.SMALL,
         });
 
+        const shouldRespondWithImageTemplate =
+            this.runtime.character?.templates
+                ?.twitterShouldRespondWithImageTemplate;
+        const shouldRespondWithImageContext = shouldRespondWithImageTemplate
+            ? composeContext({
+                  state,
+                  template: shouldRespondWithImageTemplate,
+              })
+            : null;
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ shouldRespondWithImageContext:",
+            shouldRespondWithImageContext
+        );
+
+        const shouldRespondWithImage = shouldRespondWithImageContext
+            ? await generateShouldRespond({
+                  runtime: this.runtime,
+                  context: shouldRespondWithImageContext,
+                  modelClass: ModelClass.SMALL,
+              })
+            : "IGNORE";
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ shouldRespondWithImage:",
+            shouldRespondWithImage
+        );
+
         console.log(
             "🚀 ~ FarcasterInteractionManager ~ shouldRespond:",
             shouldRespond
         );
 
-        if (shouldRespond !== "RESPOND") {
+        if (
+            shouldRespond !== "RESPOND" &&
+            shouldRespondWithImage !== "RESPOND"
+        ) {
             console.log("Not responding to message");
             return { text: "Response Decision:", action: shouldRespond };
+        }
+
+        let generatedImageUrl: string | undefined;
+        if (shouldRespondWithImage === "RESPOND") {
+            generatedImageUrl = await this.generateImage(cast.text);
         }
 
         const context = composeContext({
@@ -329,7 +363,7 @@ export class FarcasterInteractionManager {
                 messageHandlerTemplate,
         });
 
-        const response = await generateMessageResponse({
+        let response = await generateMessageResponse({
             runtime: this.runtime,
             context,
             modelClass: ModelClass.SMALL,
@@ -339,6 +373,14 @@ export class FarcasterInteractionManager {
 
         if (!response.text) return;
         console.log("🚀 ~ FarcasterInteractionManager ~ response:", response);
+        if (shouldRespondWithImage === "RESPOND" && generatedImageUrl) {
+            // try tp pin platform ai to create nft collection
+            const address = await this.extractAddressFromPost(cast.text);
+            response.text += `
+            @${this.runtime.getSetting("PLATFORM_AI_FARCASTER_NAME")} could you mint this image as an NFT?
+            creatorAddress: ${address}
+            `;
+        }
 
         try {
             const results = await sendCast({
@@ -351,6 +393,9 @@ export class FarcasterInteractionManager {
                     parentFid: cast.author.fid,
                     parentHash: cast.hash,
                 },
+                embeds: generatedImageUrl
+                    ? [{ url: generatedImageUrl }]
+                    : undefined,
             });
 
             const newState = await this.runtime.updateRecentMessageState(state);
@@ -384,5 +429,49 @@ export class FarcasterInteractionManager {
         } catch (error) {
             console.error(`Error sending response cast: ${error}`);
         }
+    }
+
+    private async generateImage(description: string) {
+        const keywordsResponse = await generateText({
+            runtime: this.runtime,
+            context: `
+            I want to create an NFT image using the following information, condense all descriptions into 8 words or fewer, not necessarily individual words, to create a more abstract visual representation for the generated image:
+Description: ${description}.
+the response should be comma separated words or phrases of the words only.
+            `,
+            modelClass: ModelClass.SMALL,
+        });
+        console.log(
+            "🚀 ~ FarcasterInteractionManager ~ generateImage ~ keywordsResponse:",
+            keywordsResponse
+        );
+        const imageUrl = await generateImage(
+            `please generate an image for this NFT ${keywordsResponse.replaceAll('"', "")}`,
+            this.runtime.character.exactlyModelId ||
+                this.runtime.getSetting("EXACTLY_MODEL_ID") ||
+                "c4c51742-fd8e-47df-95bc-da3ca5d895fc"
+        );
+        return imageUrl;
+    }
+
+    private async extractAddressFromPost(context: string) {
+        let content: any;
+        try {
+            content = await generateObjectV2({
+                runtime: this.runtime,
+                context,
+                // @ts-expect-error there was an type error in source code here
+                modelClass: ModelClass.SMALL,
+                schema: NftCreationParamsSchema,
+            });
+        } catch (e) {
+            elizaLogger.error(`Failed to generate NFT. Error: ${e}`);
+        }
+        console.log("🚀 ~ generated params from post:", content);
+
+        if (!isNftCreationParams(content?.object)) {
+            return null;
+        }
+        return content.object.creatorAddress;
     }
 }

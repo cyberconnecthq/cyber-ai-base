@@ -8,7 +8,8 @@
         "@ai16z/eliza": "workspace:*",
         "@farcaster/hub-nodejs": "^0.12.7",
         "viem": "^2.21.47",
-        "@neynar/nodejs-sdk": "^2.0.3"
+        "@neynar/nodejs-sdk": "^2.0.3",
+        "@cyberlab/ai-external-serivce": "workspace:*"
     },
     "devDependencies": {
         "tsup": "^8.3.5"

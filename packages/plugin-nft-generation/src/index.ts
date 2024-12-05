@@ -102,7 +102,7 @@ Please update them and try again.
             ? (_state.imageUrlInPost as string)
             : false;
 
-        const coCreator = _state.aiArtistAddress as string | undefined;
+        const aiArtistAddress = _state.aiArtistAddress as string | undefined;
 
         if (!imageUrl) {
             elizaLogger.error(`did not get image url from the post`);
@@ -121,9 +121,9 @@ Please update them and try again.
             const result = await createCollection({
                 name: content.object.name,
                 description: content.object.description,
-                creator: content.object.creatorAddress,
+                creator: aiArtistAddress || content.object.creatorAddress,
                 image: imageUrl,
-                coCreator,
+                coCreator: content.object.creatorAddress,
             });
             return callback?.({
                 text: `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!,
