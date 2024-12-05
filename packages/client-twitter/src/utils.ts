@@ -4,12 +4,7 @@ import { Content, Memory, UUID } from "@ai16z/eliza";
 import { stringToUuid } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import { elizaLogger } from "@ai16z/eliza";
-import {
-    ChibsModelId,
-    generateImage,
-    promptForChibs,
-    promptForChibsByGpt,
-} from "@cyberlab/ai-external-serivce";
+import { generateImage, promptByGpt } from "@cyberlab/ai-external-serivce";
 
 const MAX_TWEET_LENGTH = 280; // Updated to Twitter's current character limit
 
@@ -175,7 +170,15 @@ export async function sendTweet(
     roomId: UUID,
     twitterUsername: string,
     inReplyTo: string,
-    shouldRespondWithImage: boolean = false
+    imageParams: {
+        shouldRespondWithImage: boolean;
+        exatlyModelId?: string;
+        originTweet: string;
+    } = {
+        shouldRespondWithImage: false,
+        exatlyModelId: "",
+        originTweet: "",
+    }
 ): Promise<Memory[]> {
     const tweetChunks = splitTweetContent(content.text);
     const sentTweets: Tweet[] = [];
@@ -184,12 +187,20 @@ export async function sendTweet(
     for (const [index, chunk] of tweetChunks.entries()) {
         let body, result, imageResponse;
         console.log("----------send tweet-----------");
-        console.log(`----------${shouldRespondWithImage}-----------`);
-        if (shouldRespondWithImage) {
-            const imagePrompt = await promptForChibsByGpt(content.text);
+        console.log(
+            `----------${imageParams.shouldRespondWithImage},${imageParams.exatlyModelId}-----------`
+        );
+        if (imageParams.shouldRespondWithImage && imageParams.exatlyModelId) {
+            console.log("----------send tweet with image-----------");
+            const imagePrompt = client.runtime.character
+                .imageGenerationPromptFormat
+                ? await client.runtime.character.imageGenerationPromptFormat(
+                      imageParams.originTweet
+                  )
+                : await promptByGpt(imageParams.originTweet);
             const image = await generateImage(
-                imagePrompt || promptForChibs(content.text),
-                ChibsModelId
+                imagePrompt,
+                imageParams.exatlyModelId
             );
             imageResponse = image ? await fetch(image) : null;
             console.log(imageResponse);

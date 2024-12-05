@@ -19,6 +19,14 @@ import { extractNftParamsTemplate } from "./extractNftParamsTemplate";
 import { isNftCreationParams, NftCreationParamsSchema } from "./types";
 import { createCollection, generateImage } from "@cyberlab/ai-external-serivce";
 
+function validateUrl(url: string): boolean {
+    try {
+        new URL(url);
+        return true;
+    } catch {
+        return false;
+    }
+}
 export const nftGenerationEvaluator: Evaluator = {
     name: "GENERATE_NFT",
     alwaysRun: true,
@@ -35,12 +43,11 @@ export const nftGenerationEvaluator: Evaluator = {
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         // elizaLogger.log("Validating nft generation action");
         // return !!lumaApiKey;
+        const text = message.content.text.toLocaleLowerCase();
         return (
-            message.content.text.includes("nft") ||
-            message.content.text.includes("NFT") ||
-            message.content.text.includes("Nft") ||
-            message.content.text.includes("mint") ||
-            message.content.text.includes("Mint")
+            text.includes("nft") ||
+            text.includes("mint") ||
+            text.includes("collection")
         );
     },
     handler: async (
@@ -81,7 +88,13 @@ export const nftGenerationEvaluator: Evaluator = {
             });
             return;
         }
-        let imageUrl = _state.imageUrlInPost as string | undefined;
+
+        let imageUrl: string | false = validateUrl(
+            _state.imageUrlInPost as string
+        )
+            ? (_state.imageUrlInPost as string)
+            : false;
+
         if (!imageUrl) {
             const keywordsResponse = await generateText({
                 runtime,
@@ -94,7 +107,8 @@ Description: ${content.object.description}
             });
             imageUrl = await generateImage(
                 `please generate an image for this NFT ${keywordsResponse.replaceAll('"', "")}`,
-                runtime.getSetting("EXACTLY_MODEL_ID") as string
+                runtime.character.exactlyModelId ||
+                    runtime.getSetting("EXACTLY_MODEL_ID")
             );
         }
         if (!imageUrl) {
@@ -117,7 +131,7 @@ Description: ${content.object.description}
                 creator: content.object.creatorAddress,
                 image: imageUrl,
             });
-            return callback({
+            return callback?.({
                 text: `Here is your generated NFT link! tokenId:${result.tokenId}, contractAddress:${result.contractAddress},
                 nftLink: ${`${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`}
                 `,

@@ -5,6 +5,7 @@ import {
     shouldRespondFooter,
 } from "@ai16z/eliza";
 import { loadCharacterEnv } from "../loadEnv.ts";
+
 const envs = loadCharacterEnv("chiblings") as any;
 export const chiblings: Character = {
     name: "Chiblings",
@@ -12,7 +13,7 @@ export const chiblings: Character = {
     clients: [Clients.TWITTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {
-        secrets: { envs },
+        secrets: { ...envs.parsed },
     },
     system: `You are a helpful Twitter Chatbot Agent, collaborating with other assistants. You are the developer of a token called $CHIBS which is launched at chibs.xyz. $CHIBS is on Cyber Etherum L2 (cyber.co). Total supply of $CHIBS is 8,888,888,888. Contract address: 0x38f970260c3eeee0adcaed0e2c3e937e8e2e9780. Your goal is to promote $CHIBS as a memecoin on Twitter.
   You will reply to all mentions of your Twitter Account as if you are having a conversation with the user. Use the provided tools to progress towards answering the question. If you are unable to fully answer, that's OK, another assistant with different tools will help where you left off. Execute what you can to make progress. If you or any of the other assistants have the final answer or deliverable, prefix your response with FINAL ANSWER so the team knows to stop. You have access to the following tools: {tool_names}.
@@ -207,6 +208,7 @@ export const chiblings: Character = {
         "resourceful",
         "endearing",
     ],
+    exactlyModelId: envs.parsed?.EXACTLY_MODEL_ID,
     templates: {
         twitterShouldRespondTemplate:
             `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
@@ -235,16 +237,49 @@ Thread of Tweets You Are Replying To:
 # INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
 ` + shouldRespondFooter,
         twitterShouldRespondWithImageTemplate:
-            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message with an image. Do not comment. Just respond with "true" or "false".
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message that are requested to generate image or draw a picture. Do not comment. Just respond with "true" or "false".
 
 Response options are RESPOND, IGNORE and STOP .
 
-{{agentName}} should respond to messages that are requested to generate image or draw a picture, IGNORE messages that are irrelevant to them, and should STOP if the conversation is concluded.
+{{agentName}} should RESPOND to messages that are requested to generate image or draw a picture, IGNORE messages that are irrelevant to them.
 
-If users ask {{agentName}} to generate/draw an image/picture/pic/img/pict for them should RESPOND.
-If users don't want {{agentName}} to generate/draw an image/picture for them should IGNORE.
+If users ask {{agentName}} to generate/draw an image/picture/pic/img/pict for them, then should RESPOND.
+If a message is not contains words like generate/draw an image/picture/pic/img, then should IGNORE.
 
+{{recentPosts}}
 # INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
 ` + shouldRespondFooter,
+    },
+    imageGenerationPromptFormat: async (prompt: string) => {
+        let p = prompt
+            .toLowerCase()
+            .replaceAll("chibs", "penguin")
+            .replaceAll("chib", "penguin")
+            .replaceAll("chibling", "penguin")
+            .replaceAll("chiblings", "penguin");
+        p +=
+            "; cartoon style; cute white eyes with black eyeball; flat color background;";
+        const response = await (
+            await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    messages: [
+                        {
+                            role: "user",
+                            content:
+                                "# INSTRUCTIONS: All the subjects should always be PENGUIN. " +
+                                "Infer a description in less than 20 words for a cartoon penguin drawing from this text: " +
+                                p,
+                        },
+                    ],
+                }),
+            })
+        ).json();
+        return response?.choices?.[0]?.message?.content as string;
     },
 };
