@@ -4,6 +4,7 @@ type CreateCollectionByAgentInput = {
     image: string; // url
     creator: string;
     totalSupply?: number;
+    coCreator?: string;
 };
 export const createCollection = async (
     params: CreateCollectionByAgentInput
@@ -35,6 +36,7 @@ mutation createToken($input: CreateCollectionByAgentInput!) {
                     image: params.image,
                     signature:
                         "LsVo7wLdn7XPAOTcb12802hykFWuM0zkRli0YwZdnsghEvBJpWeLV8dfchrZ",
+                    coCreator: params.coCreator,
                 },
             },
         }),
