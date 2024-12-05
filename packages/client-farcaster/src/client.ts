@@ -20,7 +20,7 @@ export class FarcasterClient {
     runtime: IAgentRuntime;
     farcaster: NeynarAPIClient;
 
-    constructor(opts: { runtime: IAgentRuntime; url: string; ssl: boolean }) {
+    constructor(opts: { runtime: IAgentRuntime }) {
         this.runtime = opts.runtime;
         this.farcaster = new NeynarAPIClient({
             apiKey: this.runtime.getSetting("NEYNAR_API_KEY") as string,
@@ -129,7 +129,10 @@ export class FarcasterClient {
 
         casts.map((cast) => {
             if (cast) {
-                this.runtime.cacheManager.set(`farcaster/cast/${toHex(cast.hash)}`, cast);
+                this.runtime.cacheManager.set(
+                    `farcaster/cast/${toHex(cast.hash)}`,
+                    cast
+                );
             }
         });
 
@@ -137,7 +140,9 @@ export class FarcasterClient {
     }
 
     async getProfile(fid: number): Promise<User> {
-        const cachedProfile = await this.runtime.cacheManager.get<User>(`farcaster/profile/${fid}`)
+        const cachedProfile = await this.runtime.cacheManager.get<User>(
+            `farcaster/profile/${fid}`
+        );
         if (cachedProfile) {
             return cachedProfile;
         }

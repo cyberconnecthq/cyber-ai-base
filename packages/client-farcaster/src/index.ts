@@ -16,10 +16,6 @@ export class FarcasterAgentClient implements Client {
             client ??
             new FarcasterClient({
                 runtime,
-                ssl: true,
-                url:
-                    runtime.getSetting("FARCASTER_HUB_URL") ??
-                    "hub.pinata.cloud",
             });
 
         this.posts = new FarcasterPostManager(this.client, this.runtime);
