@@ -12,7 +12,7 @@ export const artist: Character = {
     name: "Sally",
     username: "sally",
     plugins: [],
-    clients: [Clients.TWITTER],
+    clients: [Clients.FARCASTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {
         secrets: {
@@ -183,7 +183,7 @@ export const artist: Character = {
     exactlyModelId: envs.parsed?.EXACTLY_MODEL_ID,
     templates: {
         twitterShouldRespondTemplate:
-            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment.
 
 Response options are RESPOND, IGNORE and STOP .
 
@@ -198,7 +198,7 @@ If {{agentName}} concludes a conversation and isn't part of it anymore, {{agentN
 IMPORTANT: {{agentName}} (aka @{{twitterUserName}}) loves engaging with others, so unless the message is disrespectful or harmful, she will almost always RESPOND. If unsure, RESPOND is always the best choice over IGNORE.` +
             shouldRespondFooter,
         twitterShouldRespondWithImageTemplate:
-            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message that are requested to generate image or draw a picture. Do not comment. Just respond with "true" or "false".
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message that are requested to generate image or draw a picture. Do not comment. .
 
 Response options are RESPOND, IGNORE and STOP .
 

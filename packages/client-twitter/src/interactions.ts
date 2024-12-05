@@ -62,7 +62,7 @@ Thread of Tweets You Are Replying To:
 ` + messageCompletionFooter;
 
 export const twitterShouldRespondTemplate =
-    `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
+    `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. .
 
 Response options are RESPOND, IGNORE and STOP .
 

@@ -211,7 +211,7 @@ export const chiblings: Character = {
     exactlyModelId: envs.parsed?.EXACTLY_MODEL_ID,
     templates: {
         twitterShouldRespondTemplate:
-            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. .
 
 Response options are RESPOND, IGNORE and STOP .
 
@@ -237,7 +237,7 @@ Thread of Tweets You Are Replying To:
 # INSTRUCTIONS: Respond with [RESPOND] if {{agentName}} should respond, or [IGNORE] if {{agentName}} should not respond to the last message and [STOP] if {{agentName}} should stop participating in the conversation.
 ` + shouldRespondFooter,
         twitterShouldRespondWithImageTemplate:
-            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message that are requested to generate image or draw a picture. Do not comment. Just respond with "true" or "false".
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message that are requested to generate image or draw a picture. Do not comment. .
 
 Response options are RESPOND, IGNORE and STOP .
 

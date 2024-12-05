@@ -56,7 +56,7 @@ Recent interactions between {{agentName}} and other users:
 
 export const shouldRespondTemplate =
     //
-    `# INSTRUCTIONS: Determine if {{agentName}} (@{{farcasterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
+    `# INSTRUCTIONS: Determine if {{agentName}} (@{{farcasterUserName}}) should respond to the message and participate in the conversation. Do not comment. .
 
 Response options are RESPOND, IGNORE and STOP.
 

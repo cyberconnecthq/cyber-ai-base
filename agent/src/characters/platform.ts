@@ -12,7 +12,7 @@ export const platform: Character = {
     name: "Salad",
     username: "salad",
     plugins: [nftGenerationPlugin],
-    clients: [Clients.TWITTER, Clients.FARCASTER],
+    clients: [Clients.FARCASTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {
         secrets: {
@@ -188,7 +188,7 @@ export const platform: Character = {
     exactlyModelId: "c4c51742-fd8e-47df-95bc-da3ca5d895fc",
     templates: {
         shouldRespondTemplate:
-            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. Just respond with "true" or "false".
+            `# INSTRUCTIONS: Determine if {{agentName}} (@{{twitterUserName}}) should respond to the message and participate in the conversation. Do not comment. .
 
 Response options are RESPOND, IGNORE and STOP .
 
