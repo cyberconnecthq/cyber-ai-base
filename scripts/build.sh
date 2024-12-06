@@ -35,14 +35,14 @@ PACKAGES=(
   "plugin-bootstrap"
   "plugin-image-generation"
   "plugin-coinbase"
+  "ai-external-service"
+  "plugin-nft-generation"
   "client-auto"
   "client-direct"
   "client-discord"
   "client-telegram"
   "client-twitter"
   "client-farcaster"
-  "ai-external-service"
-  "plugin-nft-generation"
 )
 
 # Build packages in specified order

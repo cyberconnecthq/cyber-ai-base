@@ -118,18 +118,23 @@ Please update them and try again.
                 "Create NFT here: \n",
                 JSON.stringify(content.object, null, 2)
             );
-            const result = await createCollection({
+            console.log({
                 name: content.object.name,
                 description: content.object.description,
                 creator: aiArtistAddress || content.object.creatorAddress,
                 image: imageUrl,
                 coCreator: content.object.creatorAddress,
             });
+            const result = await createCollection({
+                name: content.object.name,
+                description: content.object.description,
+                creator: aiArtistAddress || content.object.creatorAddress,
+                image: imageUrl,
+                coCreator: content.object.creatorAddress || null,
+            });
             if (result.nftId) {
                 return callback?.({
-                    text: `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!,
-                ${`${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`}
-                `,
+                    text: `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!, ${`${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`}`,
                     type: "GENERATE_NFT",
                     status: "SUCCESS",
                     nftLink: `${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`,

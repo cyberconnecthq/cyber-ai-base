@@ -22,7 +22,6 @@ import {
     wait,
     // isBurnChibsTx,
 } from "./utils.ts";
-import { embeddingZeroVector } from "@ai16z/eliza";
 
 export const twitterMessageHandlerTemplate =
     `{{timeline}}
@@ -117,12 +116,17 @@ export class TwitterInteractionClient {
             const tweetCandidates = (
                 await this.client.fetchSearchTweets(
                     `@${twitterUsername}`,
-                    20,
+                    10,
                     SearchMode.Latest
                 )
-            ).tweets;
+            ).tweets.filter((tweet) => {
+                return (
+                    Date.now() - new Date(tweet.timestamp * 1000).getTime() <=
+                    5 * 1e3 * 60
+                );
+            });
 
-            elizaLogger.log("search result: ", tweetCandidates);
+            // elizaLogger.log("search result: ", tweetCandidates.length);
 
             // de-duplicate tweetCandidates with a set
             const uniqueTweetCandidates = [...new Set(tweetCandidates)];
@@ -175,6 +179,7 @@ export class TwitterInteractionClient {
                         thread,
                     });
 
+                    elizaLogger.info("set lastCheckedTweetId", tweet.id);
                     // Update the last checked tweet ID after processing each tweet
                     this.client.lastCheckedTweetId = BigInt(tweet.id);
                 }
@@ -258,8 +263,7 @@ export class TwitterInteractionClient {
                     return `ID: ${tweet.id}\nFrom: ${tweet.name} (@${tweet.username})${tweet.inReplyToStatusId ? ` In reply to: ${tweet.inReplyToStatusId}` : ""}\nText: ${tweet.text}\n---\n`;
                 })
                 .join("\n");
-        // console.log("photo0", photos[0]);
-        console.log(tweet.username.toLocaleLowerCase());
+
         let state = await this.runtime.composeState(message, {
             twitterClient: this.client.twitterClient,
             twitterUserName: this.runtime.getSetting("TWITTER_USERNAME"),
@@ -268,10 +272,11 @@ export class TwitterInteractionClient {
             timeline: formattedHomeTimeline,
             imageUrlInPost: photos[0] || false,
             // if the post is from artist
-            coCreator:
-                tweet.username === process.env.ARTIST_TWITTER_USERNAME
+            aiArtistAddress:
+                tweet.username.toLocaleLowerCase() ===
+                process.env.ARTIST_TWITTER_USERNAME.toLocaleLowerCase()
                     ? "0x796321ec356026FD4b3b3910dBAFBc434C252006"
-                    : undefined,
+                    : null,
         });
         // console.log(state);
 
@@ -313,27 +318,32 @@ export class TwitterInteractionClient {
                 this.runtime.character?.templates?.shouldRespondTemplate ||
                 twitterShouldRespondTemplate,
         });
-
-        const shouldRespondWithImageContext = composeContext({
-            state,
-            template:
-                this.runtime.character.templates
-                    ?.twitterShouldRespondWithImageTemplate ||
-                this.runtime.character?.templates
-                    ?.shouldRespondWithImageTemplate,
-        });
-
         const shouldRespond = await generateShouldRespond({
             runtime: this.runtime,
             context: shouldRespondContext,
             modelClass: ModelClass.MEDIUM,
         });
+        let shouldRespondWithImage = "IGNORE";
+        if (
+            this.runtime.character?.templates?.shouldRespondWithImageTemplate ||
+            this.runtime.character?.templates
+                ?.twitterShouldRespondWithImageTemplate
+        ) {
+            const shouldRespondWithImageContext = composeContext({
+                state,
+                template:
+                    this.runtime.character.templates
+                        ?.twitterShouldRespondWithImageTemplate ||
+                    this.runtime.character?.templates
+                        ?.shouldRespondWithImageTemplate,
+            });
 
-        const shouldRespondWithImage = await generateShouldRespond({
-            runtime: this.runtime,
-            context: shouldRespondWithImageContext,
-            modelClass: ModelClass.MEDIUM,
-        });
+            shouldRespondWithImage = await generateShouldRespond({
+                runtime: this.runtime,
+                context: shouldRespondWithImageContext,
+                modelClass: ModelClass.MEDIUM,
+            });
+        }
 
         // const txHash = tweet.text.match(/0x[A-Fa-f0-9]{64}/)?.[0];
 
@@ -511,138 +521,5 @@ export class TwitterInteractionClient {
                 elizaLogger.error(`Error sending response tweet: ${error}`);
             }
         }
-    }
-
-    async buildConversationThread(
-        tweet: Tweet,
-        maxReplies: number = 4
-    ): Promise<Tweet[]> {
-        const thread: Tweet[] = [];
-        const visited: Set<string> = new Set();
-
-        async function processThread(currentTweet: Tweet, depth: number = 0) {
-            elizaLogger.log("Processing tweet:", {
-                id: currentTweet.id,
-                inReplyToStatusId: currentTweet.inReplyToStatusId,
-                depth: depth,
-            });
-
-            if (!currentTweet) {
-                elizaLogger.log("No current tweet found for thread building");
-                return;
-            }
-
-            if (depth >= maxReplies) {
-                elizaLogger.log("Reached maximum reply depth", depth);
-                return;
-            }
-
-            // Handle memory storage
-            const memory = await this.runtime.messageManager.getMemoryById(
-                stringToUuid(currentTweet.id + "-" + this.runtime.agentId)
-            );
-            if (!memory) {
-                const roomId = stringToUuid(
-                    currentTweet.conversationId + "-" + this.runtime.agentId
-                );
-                const userId = stringToUuid(currentTweet.userId);
-
-                await this.runtime.ensureConnection(
-                    userId,
-                    roomId,
-                    currentTweet.username,
-                    currentTweet.name,
-                    "twitter"
-                );
-
-                this.runtime.messageManager.createMemory({
-                    id: stringToUuid(
-                        currentTweet.id + "-" + this.runtime.agentId
-                    ),
-                    agentId: this.runtime.agentId,
-                    content: {
-                        text: currentTweet.text,
-                        source: "twitter",
-                        url: currentTweet.permanentUrl,
-                        inReplyTo: currentTweet.inReplyToStatusId
-                            ? stringToUuid(
-                                  currentTweet.inReplyToStatusId +
-                                      "-" +
-                                      this.runtime.agentId
-                              )
-                            : undefined,
-                    },
-                    createdAt: currentTweet.timestamp * 1000,
-                    roomId,
-                    userId:
-                        currentTweet.userId === this.twitterUserId
-                            ? this.runtime.agentId
-                            : stringToUuid(currentTweet.userId),
-                    embedding: embeddingZeroVector,
-                });
-            }
-
-            if (visited.has(currentTweet.id)) {
-                elizaLogger.log("Already visited tweet:", currentTweet.id);
-                return;
-            }
-
-            visited.add(currentTweet.id);
-            thread.unshift(currentTweet);
-
-            elizaLogger.debug("Current thread state:", {
-                length: thread.length,
-                currentDepth: depth,
-                tweetId: currentTweet.id,
-            });
-
-            if (currentTweet.inReplyToStatusId) {
-                elizaLogger.log(
-                    "Fetching parent tweet:",
-                    currentTweet.inReplyToStatusId
-                );
-                try {
-                    const parentTweet = await this.twitterClient.getTweet(
-                        currentTweet.inReplyToStatusId
-                    );
-
-                    if (parentTweet) {
-                        elizaLogger.log("Found parent tweet:", {
-                            id: parentTweet.id,
-                            text: parentTweet.text?.slice(0, 50),
-                        });
-                        await processThread(parentTweet, depth + 1);
-                    } else {
-                        elizaLogger.log(
-                            "No parent tweet found for:",
-                            currentTweet.inReplyToStatusId
-                        );
-                    }
-                } catch (error) {
-                    elizaLogger.log("Error fetching parent tweet:", {
-                        tweetId: currentTweet.inReplyToStatusId,
-                        error,
-                    });
-                }
-            } else {
-                elizaLogger.log(
-                    "Reached end of reply chain at:",
-                    currentTweet.id
-                );
-            }
-        }
-
-        // Need to bind this context for the inner function
-        await processThread.bind(this)(tweet, 0);
-
-        elizaLogger.debug("Final thread built:", {
-            totalTweets: thread.length,
-            tweetIds: thread.map((t) => ({
-                id: t.id,
-                text: t.text?.slice(0, 50),
-            })),
-        });
-
-        return thread;
     }
 }
