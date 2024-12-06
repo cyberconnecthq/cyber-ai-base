@@ -97,6 +97,14 @@ export class FarcasterInteractionManager {
                 cast.author.username,
                 cast.text
             );
+            if (
+                cast.author.username ===
+                this.runtime.getSetting("PLATFORM_AI_FARCASTER_NAME")
+            ) {
+                console.log("skipping cast from platform ai", cast.hash);
+                continue;
+            }
+
             const conversationId = `${cast.thread_hash}-${this.runtime.agentId}`;
             const roomId = stringToUuid(conversationId);
             const userId = stringToUuid(cast.author.username.toString());
@@ -454,15 +462,19 @@ the response should be comma separated words or phrases of the words only.
         return imageUrl;
     }
 
-    private async extractAddressFromPost(context: string) {
+    private async extractAddressFromPost(post: string) {
         let content: any;
         try {
             content = await generateObjectV2({
                 runtime: this.runtime,
-                context,
+                context: `${post}`,
                 // @ts-expect-error there was an type error in source code here
                 modelClass: ModelClass.SMALL,
                 schema: NftCreationParamsSchema,
+                schemaDescription: `
+                pay special attention to the following fields!:
+                - creator address: it should be a 42 character long string starting with 0x and it should be provided in the message exaclty as it is. if it is not provided, leave the field blank.
+                `,
             });
         } catch (e) {
             elizaLogger.error(`Failed to generate NFT. Error: ${e}`);

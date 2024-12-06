@@ -22,8 +22,7 @@ export const NftCreationParamsSchema = z.object({
         description: "The description of the NFT",
     }),
     creatorAddress: z.string({
-        description:
-            "The address of the creator of the NFT, it should be a 42 character long string starting with 0x",
+        description: "The address of the creator of the NFT",
     }),
 });
 
