@@ -11,7 +11,7 @@ const envs = loadCharacterEnv("platform") as any;
 export const platform: Character = {
     name: "Iro",
     plugins: [nftGenerationPlugin],
-    clients: [Clients.TWITTER],
+    clients: [Clients.TWITTER,Clients.FARCASTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {
         secrets: {
