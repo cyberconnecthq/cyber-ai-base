@@ -9,9 +9,6 @@ export type Profile = {
     pfp?: string;
     bio?: string;
     url?: string;
-    // location?: string;
-    // twitter?: string;
-    // github?: string;
 };
 
 export const NftCreationParamsSchema = z.object({
@@ -21,9 +18,12 @@ export const NftCreationParamsSchema = z.object({
     description: z.string({
         description: "The description of the NFT",
     }),
-    creatorAddress: z.string({
-        description: "The address of the creator of the NFT",
-    }),
+    creatorAddress: z
+        .string({
+            description:
+                "The address of the creator of the NFT, it's a 42 character long string starting with 0x",
+        })
+        .nullable(),
 });
 
 export interface NftCreationParams {
@@ -37,6 +37,7 @@ export const isNftCreationParams = (
 ): object is NftCreationParams => {
     if (NftCreationParamsSchema.safeParse(object).success) {
         if (
+            !object.creatorAddress ||
             object.creatorAddress.length !== 42 ||
             !object.creatorAddress.startsWith("0x")
         ) {

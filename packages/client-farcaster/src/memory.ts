@@ -109,6 +109,7 @@ export async function buildConversationThread({
         if (currentCast.parent_hash) {
             const parentCast = await client.getCast(currentCast.parent_hash);
 
+            if (!parentCast) return;
             await processThread(parentCast);
         }
     }

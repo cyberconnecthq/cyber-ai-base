@@ -357,11 +357,6 @@ export class FarcasterInteractionManager {
             return { text: "Response Decision:", action: shouldRespond };
         }
 
-        let generatedImageUrl: string | undefined;
-        if (shouldRespondWithImage === "RESPOND") {
-            generatedImageUrl = await this.generateImage(cast.text);
-        }
-
         const context = composeContext({
             state,
             template:
@@ -380,15 +375,29 @@ export class FarcasterInteractionManager {
         response.inReplyTo = memoryId;
 
         if (!response.text) return;
-        console.log("🚀 ~ FarcasterInteractionManager ~ response:", response);
-        if (shouldRespondWithImage === "RESPOND" && generatedImageUrl) {
-            // try tp pin platform ai to create nft collection
-            const address = await this.extractAddressFromPost(cast.text);
-            response.text += `
-            @${this.runtime.getSetting("PLATFORM_AI_FARCASTER_NAME")} could you mint this image as an NFT?
-            creatorAddress: ${address}
-            `;
+
+        let generatedImageUrl: string | undefined;
+        const address = await this.extractAddressFromPost(cast.text);
+        if (shouldRespondWithImage === "RESPOND") {
+            if (address) {
+                generatedImageUrl = await this.generateImage(cast.text);
+                response.text += `
+@${this.runtime.getSetting("PLATFORM_AI_FARCASTER_NAME")} could you mint this image as an NFT?
+creatorAddress: ${address}
+`;
+            } else {
+                response.text += `
+Missing Information!
+
+Please confirm that you have provided the following:
+
+- EVM Address: Ensure you have submitted a valid EVM address to earn rewards.
+
+Please update them and try again.
+                `;
+            }
         }
+        console.log("🚀 ~ FarcasterInteractionManager ~ response:", response);
 
         try {
             const results = await sendCast({
@@ -462,18 +471,17 @@ the response should be comma separated words or phrases of the words only.
         return imageUrl;
     }
 
-    private async extractAddressFromPost(post: string) {
+    private async extractAddressFromPost(post: string): Promise<string | null> {
         let content: any;
         try {
             content = await generateObjectV2({
                 runtime: this.runtime,
                 context: `${post}`,
                 // @ts-expect-error there was an type error in source code here
-                modelClass: ModelClass.SMALL,
+                modelClass: ModelClass.MEDIUM,
                 schema: NftCreationParamsSchema,
                 schemaDescription: `
-                pay special attention to the following fields!:
-                - creator address: it should be a 42 character long string starting with 0x and it should be provided in the message exaclty as it is. if it is not provided, leave the field blank.
+                do not make up value for creator address
                 `,
             });
         } catch (e) {

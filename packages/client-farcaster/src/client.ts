@@ -1,12 +1,10 @@
-import { IAgentRuntime } from "@ai16z/eliza";
+import { elizaLogger, IAgentRuntime } from "@ai16z/eliza";
 import { toHex } from "viem";
 import { populateMentions } from "./utils";
 import { NeynarAPIClient } from "@neynar/nodejs-sdk";
 import {
-    CastsResponseResult,
     CastWithInteractions,
     NotificationType,
-    PostCastResponseCast,
     User,
     Embed,
 } from "@neynar/nodejs-sdk/build/api/index.js";
@@ -82,7 +80,7 @@ export class FarcasterClient {
     //     };
     // }
 
-    async getCast(castHash: string): Promise<CastWithInteractions> {
+    async getCast(castHash: string): Promise<CastWithInteractions | null> {
         const cachedCast =
             await this.runtime.cacheManager.get<CastWithInteractions>(
                 `farcaster/cast/${castHash}`
@@ -91,15 +89,20 @@ export class FarcasterClient {
             return cachedCast;
         }
 
-        const result = await this.farcaster.fetchBulkCasts({
-            casts: [castHash],
-        });
+        try {
+            const result = await this.farcaster.fetchBulkCasts({
+                casts: [castHash],
+            });
 
-        const cast = result.result.casts[0];
+            const cast = result.result.casts[0];
 
-        this.runtime.cacheManager.set(`farcaster/cast/${castHash}`, cast);
+            this.runtime.cacheManager.set(`farcaster/cast/${castHash}`, cast);
 
-        return cast;
+            return cast;
+        } catch (e) {
+            elizaLogger.error(`Failed to fetch cast ${castHash}. Error: ${e}`);
+            return null;
+        }
     }
 
     async getCastsByFid(request: FidRequest) {

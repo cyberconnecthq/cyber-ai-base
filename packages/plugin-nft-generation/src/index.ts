@@ -125,15 +125,24 @@ Please update them and try again.
                 image: imageUrl,
                 coCreator: content.object.creatorAddress,
             });
-            return callback?.({
-                text: `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!,
+            if (result.nftId) {
+                return callback?.({
+                    text: `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!,
                 ${`${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`}
                 `,
-                type: "GENERATE_NFT",
-                status: "SUCCESS",
-                nftLink: `${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`,
-                nftImageUrl: imageUrl,
-            });
+                    type: "GENERATE_NFT",
+                    status: "SUCCESS",
+                    nftLink: `${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`,
+                    nftImageUrl: imageUrl,
+                });
+            } else {
+                return callback?.({
+                    text: `Nft generation failed`,
+                    type: "GENERATE_NFT",
+                    status: "FAILED",
+                    error: true,
+                });
+            }
         } catch (error) {
             elizaLogger.error(`Failed to generate NFT. Error: ${error}`);
             callback({
