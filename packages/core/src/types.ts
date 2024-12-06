@@ -639,6 +639,7 @@ export type Character = {
     };
 
     isArtist?: boolean;
+    dailyImageLimit?: number;
 
     /** Character biography */
     bio: string | string[];
