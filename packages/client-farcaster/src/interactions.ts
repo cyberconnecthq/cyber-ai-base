@@ -257,8 +257,8 @@ export class FarcasterInteractionManager {
                                 parentFid: cast.author.fid,
                                 parentHash: cast.hash,
                             },
-                            embeds: response.nftImageUrl
-                                ? [{ url: response.nftImageUrl as string }]
+                            embeds: response.nftLinkFrame
+                                ? [{ url: response.nftLinkFrame as string }]
                                 : undefined,
                         });
                         elizaLogger.log("Cast sent", results.cast);
@@ -336,7 +336,7 @@ export class FarcasterInteractionManager {
             ? await generateShouldRespond({
                   runtime: this.runtime,
                   context: shouldRespondWithImageContext,
-                  modelClass: ModelClass.MEDIUM,
+                  modelClass: ModelClass.SMALL,
               })
             : "IGNORE";
         console.log(

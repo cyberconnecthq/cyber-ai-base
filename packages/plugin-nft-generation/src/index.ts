@@ -41,11 +41,7 @@ export const nftGenerationEvaluator: Evaluator = {
         "Read the message and see if the message contain necessary information (name, description and creator address) to generate a NFT, if yes return true else false",
     validate: async (runtime: IAgentRuntime, message: Memory) => {
         const text = message.content.text.toLocaleLowerCase();
-        return (
-            text.includes("nft") ||
-            text.includes("mint") ||
-            text.includes("collection")
-        );
+        return !!text;
     },
     handler: async (
         runtime: IAgentRuntime,
@@ -140,11 +136,12 @@ Update the details and try again.
                 coCreator: content.object.creatorAddress || null,
             });
             if (result.nftId) {
+                const nftLinkFrame = `${process.env.YUME_FRAME_BASE_URL}/${result.nftId}`;
                 return callback?.({
-                    text: `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!, ${`${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`}`,
+                    text: `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!`,
                     type: "GENERATE_NFT",
                     status: "SUCCESS",
-                    nftLink: `${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`,
+                    nftLinkFrame: nftLinkFrame,
                     nftImageUrl: imageUrl,
                 });
             } else {
