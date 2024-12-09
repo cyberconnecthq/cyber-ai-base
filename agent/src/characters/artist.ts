@@ -11,7 +11,7 @@ const envs = loadCharacterEnv("artist") as any;
 export const artist: Character = {
     name: "Iroan",
     plugins: [],
-    clients: [Clients.TWITTER],
+    clients: [Clients.TWITTER, Clients.FARCASTER],
     modelProvider: ModelProviderName.OPENAI,
     settings: {
         secrets: {
