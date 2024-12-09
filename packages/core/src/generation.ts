@@ -460,42 +460,40 @@ export async function generateShouldRespond({
     modelClass: string;
 }): Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
     let retryDelay = 1000;
-    while (true) {
-        try {
-            elizaLogger.debug(
-                "Attempting to generate text with context:",
-                context
-            );
-            const response = await generateText({
-                runtime,
-                context,
-                modelClass,
-            });
+    try {
+        // elizaLogger.log(
+        //     "Attempting to generate text with context:",
+        //     context
+        // );
+        const response = await generateText({
+            runtime,
+            context,
+            modelClass,
+        });
 
-            elizaLogger.debug("Received response from generateText:", response);
-            const parsedResponse = parseShouldRespondFromText(response.trim());
-            if (parsedResponse) {
-                elizaLogger.debug("Parsed response:", parsedResponse);
-                return parsedResponse;
-            } else {
-                elizaLogger.debug("generateShouldRespond no response");
-            }
-        } catch (error) {
-            elizaLogger.error("Error in generateShouldRespond:", error);
-            if (
-                error instanceof TypeError &&
-                error.message.includes("queueTextCompletion")
-            ) {
-                elizaLogger.error(
-                    "TypeError: Cannot read properties of null (reading 'queueTextCompletion')"
-                );
-            }
+        elizaLogger.debug("Received response from generateText:", response);
+        const parsedResponse = parseShouldRespondFromText(response.trim());
+        if (parsedResponse) {
+            elizaLogger.debug("Parsed response:", parsedResponse);
+            return parsedResponse;
+        } else {
+            elizaLogger.debug("generateShouldRespond no response");
         }
-
-        elizaLogger.log(`Retrying in ${retryDelay}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, retryDelay));
-        retryDelay *= 2;
+    } catch (error) {
+        elizaLogger.error("Error in generateShouldRespond:", error);
+        if (
+            error instanceof TypeError &&
+            error.message.includes("queueTextCompletion")
+        ) {
+            elizaLogger.error(
+                "TypeError: Cannot read properties of null (reading 'queueTextCompletion')"
+            );
+        }
     }
+
+    elizaLogger.log(`Retrying in ${retryDelay}ms...`);
+    await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    retryDelay *= 2;
 }
 
 /**

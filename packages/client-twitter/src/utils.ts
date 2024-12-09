@@ -45,20 +45,20 @@ export async function buildConversationThread(
     const visited: Set<string> = new Set();
 
     async function processThread(currentTweet: Tweet, depth: number = 0) {
-        elizaLogger.debug("Processing tweet:", {
+        elizaLogger.log("Processing tweet:", {
             id: currentTweet.id,
             inReplyToStatusId: currentTweet.inReplyToStatusId,
             depth: depth,
         });
 
         if (!currentTweet) {
-            elizaLogger.debug("No current tweet found for thread building");
+            elizaLogger.log("No current tweet found for thread building");
             return;
         }
 
         // Stop if we've reached our reply limit
         if (depth >= maxReplies) {
-            elizaLogger.debug("Reached maximum reply depth", depth);
+            elizaLogger.log("Reached maximum reply depth", depth);
             return;
         }
 
@@ -108,14 +108,14 @@ export async function buildConversationThread(
         }
 
         if (visited.has(currentTweet.id)) {
-            elizaLogger.debug("Already visited tweet:", currentTweet.id);
+            elizaLogger.info("Already visited tweet:", currentTweet.id);
             return;
         }
 
         visited.add(currentTweet.id);
         thread.unshift(currentTweet);
 
-        elizaLogger.debug("Current thread state:", {
+        elizaLogger.info("Current thread state:", {
             length: thread.length,
             currentDepth: depth,
             tweetId: currentTweet.id,
@@ -123,7 +123,7 @@ export async function buildConversationThread(
 
         // If there's a parent tweet, fetch and process it
         if (currentTweet.inReplyToStatusId) {
-            elizaLogger.debug(
+            elizaLogger.info(
                 "Fetching parent tweet:",
                 currentTweet.inReplyToStatusId
             );
@@ -133,13 +133,13 @@ export async function buildConversationThread(
                 );
 
                 if (parentTweet) {
-                    elizaLogger.debug("Found parent tweet:", {
+                    elizaLogger.info("Found parent tweet:", {
                         id: parentTweet.id,
                         text: parentTweet.text?.slice(0, 50),
                     });
                     await processThread(parentTweet, depth + 1);
                 } else {
-                    elizaLogger.debug(
+                    elizaLogger.info(
                         "No parent tweet found for:",
                         currentTweet.inReplyToStatusId
                     );
@@ -160,7 +160,7 @@ export async function buildConversationThread(
 
     await processThread(tweet, 1);
 
-    elizaLogger.debug("Final thread built:", {
+    elizaLogger.log("Final thread built:", {
         totalTweets: thread.length,
         tweetIds: thread.map((t) => ({
             id: t.id,
@@ -213,6 +213,12 @@ export async function sendTweet(
                       imageParams.originTweet
                   )
                 : await promptByGpt(imageParams.originTweet);
+
+            console.log("Image generate params:", {
+                imagePrompt,
+                exatlyModelId: imageParams.exatlyModelId,
+            });
+
             const image = await generateImage(
                 imagePrompt,
                 imageParams.exatlyModelId
@@ -471,13 +477,15 @@ export async function makeTagPlatformTweet({
         });
         console.log(content);
 
-        const template = `@${process.env.PLATFORM_TWITTER_USERNAME}  please create a NFT for me. name:${content.object.name} desc:${content.object.description} creator address:${content.object.creatorAddress}`;
-        return await generateText({
+        const template = `@${process.env.PLATFORM_TWITTER_USERNAME} please create a NFT for me. name:${content.object.name} desc:${content.object.description} creator address:${content.object.creatorAddress}`;
+        const generatedText = await generateText({
             runtime: client.runtime,
             context: `please shortern this text to meet the twitter's post tweet limit to 270 words, #IMPORTANT: just shorten the desc, the addresses MUST NOT be changed; no commentary or additional information should be included.
             ${template}`,
             modelClass: ModelClass.SMALL,
         });
+        console.log("generatedText", generatedText);
+        return generatedText;
     } catch (e) {
         elizaLogger.error(`Failed to generate NFT. Error: ${e}`);
     }
