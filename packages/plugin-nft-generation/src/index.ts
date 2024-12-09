@@ -107,7 +107,14 @@ Please update them and try again.
         if (!imageUrl) {
             elizaLogger.error(`did not get image url from the post`);
             return callback({
-                text: `Please provide an image to generate the NFT`,
+                text: `
+Missing Information!
+
+Please Ensure you've provided the following:
+  Image: Upload an image for your NFT.
+
+Update the details and try again.
+                `,
                 type: "GENERATE_NFT",
                 status: "FAILED",
             });

@@ -336,7 +336,7 @@ export class FarcasterInteractionManager {
             ? await generateShouldRespond({
                   runtime: this.runtime,
                   context: shouldRespondWithImageContext,
-                  modelClass: ModelClass.SMALL,
+                  modelClass: ModelClass.MEDIUM,
               })
             : "IGNORE";
         console.log(
@@ -369,7 +369,7 @@ export class FarcasterInteractionManager {
         let response = await generateMessageResponse({
             runtime: this.runtime,
             context,
-            modelClass: ModelClass.SMALL,
+            modelClass: ModelClass.MEDIUM,
         });
 
         response.inReplyTo = memoryId;
@@ -386,7 +386,7 @@ export class FarcasterInteractionManager {
 creatorAddress: ${address}
 `;
             } else {
-                response.text += `
+                response.text = `
 Missing Information!
 
 Please confirm that you have provided the following:
@@ -478,7 +478,7 @@ the response should be comma separated words or phrases of the words only.
                 runtime: this.runtime,
                 context: `${post}`,
                 // @ts-expect-error there was an type error in source code here
-                modelClass: ModelClass.SMALL,
+                modelClass: ModelClass.MEDIUM,
                 schema: NftCreationParamsSchema,
                 schemaDescription: `
                 do not make up value for creator address
