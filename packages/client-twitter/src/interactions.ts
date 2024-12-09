@@ -362,6 +362,19 @@ export class TwitterInteractionClient {
         console.log("----------shouldRespondWithImage-----------");
         console.log(`----------${shouldRespondWithImage}-----------`);
 
+        if (
+            this.client.profile.username.toLocaleLowerCase() ===
+            process.env.ARTIST_TWITTER_USERNAME.toLocaleLowerCase()
+        ) {
+            if (shouldRespondWithImage === "RESPOND") {
+                const address = tweet.text.match(/0x[A-Fa-f0-9]{40}/)?.[0];
+                if (!address) {
+                    // if generate image without address for an artist, do nothing
+                    return { text: "Response Decision:", action: "STOP" };;
+                }
+            }
+        }
+
         // Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
         if (shouldRespond !== "RESPOND") {
             elizaLogger.log("Not responding to message");
