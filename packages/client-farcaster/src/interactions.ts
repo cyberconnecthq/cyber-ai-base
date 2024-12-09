@@ -478,7 +478,7 @@ the response should be comma separated words or phrases of the words only.
                 runtime: this.runtime,
                 context: `${post}`,
                 // @ts-expect-error there was an type error in source code here
-                modelClass: ModelClass.MEDIUM,
+                modelClass: ModelClass.SMALL,
                 schema: NftCreationParamsSchema,
                 schemaDescription: `
                 do not make up value for creator address
