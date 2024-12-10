@@ -16,7 +16,7 @@ export const promptByGpt = async (prompt: string) => {
                     {
                         role: "user",
                         content:
-                            "Infer a description in less than 20 words for this text: " +
+                            "#INSTRUCTION:According to the conversation, you should infer a description for user's image generation purpose in less than 20 words, ignore any EVM address info in the conversation; no comment." +
                             prompt,
                     },
                 ],

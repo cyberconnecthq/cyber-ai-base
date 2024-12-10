@@ -207,12 +207,14 @@ export async function sendTweet(
             dailyImageCount < client.runtime.character.dailyImageLimit
         ) {
             console.log("----------GENERATE IMAGE-----------");
+            // console.log(state);
+            // console.log(state.formattedConversation);
             const imagePrompt = client.runtime.character
                 .imageGenerationPromptFormat
                 ? await client.runtime.character.imageGenerationPromptFormat(
-                      imageParams.originTweet
+                      state.formattedConversation
                   )
-                : await promptByGpt(imageParams.originTweet);
+                : await promptByGpt(state.formattedConversation);
 
             console.log("Image generate params:", {
                 imagePrompt,
