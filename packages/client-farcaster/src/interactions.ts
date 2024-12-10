@@ -27,7 +27,7 @@ import {
     Embed,
     User,
 } from "@neynar/nodejs-sdk/build/api/index.js";
-import { generateImage } from "@cyberlab/ai-external-serivce";
+import { generateImage, promptByGpt } from "@cyberlab/ai-external-serivce";
 import { isNftCreationParams, NftCreationParamsSchema } from "./types";
 
 const AIArtist: { userName: string; address: string; fid: number }[] = [
@@ -380,7 +380,9 @@ export class FarcasterInteractionManager {
         const address = await this.extractAddressFromPost(cast.text);
         if (shouldRespondWithImage === "RESPOND") {
             if (address) {
-                generatedImageUrl = await this.generateImage(cast.text);
+                generatedImageUrl = await this.generateImage(
+                    state.formattedConversation ?? cast.text
+                );
                 response.text += `
 @${this.runtime.getSetting("PLATFORM_AI_FARCASTER_NAME")} could you mint this image as an NFT?
 creatorAddress: ${address}
@@ -449,21 +451,18 @@ Please update them and try again.
     }
 
     private async generateImage(description: string) {
-        const keywordsResponse = await generateText({
-            runtime: this.runtime,
-            context: `
-            I want to create an NFT image using the following information, condense all descriptions into 8 words or fewer, not necessarily individual words, to create a more abstract visual representation for the generated image:
-Description: ${description}.
-the response should be comma separated words or phrases of the words only.
-            `,
-            modelClass: ModelClass.SMALL,
-        });
         console.log(
-            "🚀 ~ FarcasterInteractionManager ~ generateImage ~ keywordsResponse:",
-            keywordsResponse
+            "🚀 ~ FarcasterInteractionManager ~ generateImage ~ generateImage:",
+            description
         );
+        const imagePrompt = this.client.runtime.character
+            .imageGenerationPromptFormat
+            ? await this.client.runtime.character.imageGenerationPromptFormat(
+                  description
+              )
+            : await promptByGpt(description);
         const imageUrl = await generateImage(
-            `please generate an image for this NFT ${keywordsResponse.replaceAll('"', "")}`,
+            imagePrompt,
             this.runtime.character.exactlyModelId ||
                 this.runtime.getSetting("EXACTLY_MODEL_ID") ||
                 "c4c51742-fd8e-47df-95bc-da3ca5d895fc"
