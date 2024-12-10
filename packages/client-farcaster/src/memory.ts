@@ -62,11 +62,11 @@ export async function buildConversationThread({
     const visited: Set<string> = new Set();
 
     async function processThread(currentCast: CastWithInteractions) {
-        if (visited.has(cast.hash)) {
+        if (visited.has(currentCast.hash)) {
             return;
         }
 
-        visited.add(cast.hash);
+        visited.add(currentCast.hash);
 
         const roomId = roomUuid({
             threadHash: currentCast.thread_hash,

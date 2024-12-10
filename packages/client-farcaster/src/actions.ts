@@ -25,8 +25,11 @@ export async function sendCast({
         parentFid: number;
     };
     embeds?: Embed[];
-}): Promise<{ memory: Memory; cast: CastWithInteractions }> {
+}): Promise<{ memory: Memory; cast: CastWithInteractions } | null> {
     const result = await client.submitMessage(content.text, inReplyTo, embeds);
+    if (!result) {
+        return null;
+    }
 
     return {
         cast: result,
