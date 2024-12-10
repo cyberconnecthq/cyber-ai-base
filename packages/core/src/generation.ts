@@ -21,6 +21,7 @@ import {
     parseJsonArrayFromText,
     parseJSONObjectFromText,
     parseShouldRespondFromText,
+    parseTextAndImageRespondFromText,
 } from "./parsing.ts";
 import settings from "./settings.ts";
 import {
@@ -31,6 +32,7 @@ import {
     ModelClass,
     ModelProviderName,
     ServiceType,
+    TEXT_AND_IMAGE_RESPOND_TYPE,
 } from "./types.ts";
 
 /**
@@ -473,6 +475,54 @@ export async function generateShouldRespond({
 
         elizaLogger.debug("Received response from generateText:", response);
         const parsedResponse = parseShouldRespondFromText(response.trim());
+        if (parsedResponse) {
+            elizaLogger.debug("Parsed response:", parsedResponse);
+            return parsedResponse;
+        } else {
+            elizaLogger.debug("generateShouldRespond no response");
+        }
+    } catch (error) {
+        elizaLogger.error("Error in generateShouldRespond:", error);
+        if (
+            error instanceof TypeError &&
+            error.message.includes("queueTextCompletion")
+        ) {
+            elizaLogger.error(
+                "TypeError: Cannot read properties of null (reading 'queueTextCompletion')"
+            );
+        }
+    }
+
+    elizaLogger.log(`Retrying in ${retryDelay}ms...`);
+    await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    retryDelay *= 2;
+}
+
+export async function generateTextAndImageRespond({
+    runtime,
+    context,
+    modelClass,
+}: {
+    runtime: IAgentRuntime;
+    context: string;
+    modelClass: string;
+}): Promise<TEXT_AND_IMAGE_RESPOND_TYPE | null> {
+    let retryDelay = 1000;
+    try {
+        // elizaLogger.log(
+        //     "Attempting to generate text with context:",
+        //     context
+        // );
+        const response = await generateText({
+            runtime,
+            context,
+            modelClass,
+        });
+
+        elizaLogger.debug("Received response from generateText:", response);
+        const parsedResponse = parseTextAndImageRespondFromText(
+            response.trim()
+        );
         if (parsedResponse) {
             elizaLogger.debug("Parsed response:", parsedResponse);
             return parsedResponse;

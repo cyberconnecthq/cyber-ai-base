@@ -10,6 +10,11 @@ If {{agentName}} is talking too much, you can choose [IGNORE]
 
 Your response must include one of the options.`;
 
+export const textAndImageRespondFooter = `The available options are [TEXT], [TEXTANDIMAGE], [IGNORE], or [STOP]. Choose the most appropriate option.
+If {{agentName}} is talking too much, you can choose [IGNORE]
+
+Your response must include one of the options.`;
+
 export const parseShouldRespondFromText = (
     text: string
 ): "RESPOND" | "IGNORE" | "STOP" | null => {
@@ -29,6 +34,33 @@ export const parseShouldRespondFromText = (
             : text.includes("STOP")
               ? "STOP"
               : null;
+};
+
+export const parseTextAndImageRespondFromText = (
+    text: string
+): "TEXT" | "TEXTANDIMAGE" | "IGNORE" | "STOP" | null => {
+    const match = text
+        .split("\n")[0]
+        .trim()
+        .replace("[", "")
+        .toUpperCase()
+        .replace("]", "")
+        .match(/^(RESPOND|IGNORE|STOP)$/i);
+    return match
+        ? (match[0].toUpperCase() as
+              | "TEXT"
+              | "TEXTANDIMAGE"
+              | "IGNORE"
+              | "STOP")
+        : text.includes("TEXT")
+          ? "TEXT"
+          : text.includes("TEXTANDIMAGE")
+            ? "TEXTANDIMAGE"
+            : text.includes("IGNORE")
+              ? "IGNORE"
+              : text.includes("STOP")
+                ? "STOP"
+                : null;
 };
 
 export const booleanFooter = `Respond with a YES or a NO.`;

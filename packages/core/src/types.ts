@@ -5,6 +5,12 @@ import { Readable } from "stream";
  */
 export type UUID = `${string}-${string}-${string}-${string}-${string}`;
 
+export type TEXT_AND_IMAGE_RESPOND_TYPE =
+    | "TEXT"
+    | "TEXTANDIMAGE"
+    | "IGNORE"
+    | "STOP";
+
 /**
  * Represents the content of a message or communication
  */
@@ -636,6 +642,7 @@ export type Character = {
         discordMessageHandlerTemplate?: string;
         shouldRespondWithImageTemplate?: string;
         twitterShouldRespondWithImageTemplate?: string;
+        textAndImageRespondTemplate?: string;
     };
 
     isArtist?: boolean;

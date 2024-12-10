@@ -14,6 +14,7 @@ import {
     stringToUuid,
     elizaLogger,
     Evaluator,
+    generateTextAndImageRespond,
 } from "@ai16z/eliza";
 import { ClientBase } from "./base";
 import {
@@ -310,40 +311,51 @@ export class TwitterInteractionClient {
             };
             this.client.saveRequestMessage(message, state);
         }
-        const shouldRespondContext = composeContext({
+        const respondTypeContext = composeContext({
             state,
             template:
-                this.runtime.character.templates
-                    ?.twitterShouldRespondTemplate ||
-                this.runtime.character?.templates?.shouldRespondTemplate ||
-                twitterShouldRespondTemplate,
+                this.runtime.character.templates.textAndImageRespondTemplate,
         });
-        const shouldRespond = await generateShouldRespond({
+        const respondType = await generateTextAndImageRespond({
             runtime: this.runtime,
-            context: shouldRespondContext,
+            context: respondTypeContext,
             modelClass: ModelClass.MEDIUM,
         });
-        let shouldRespondWithImage = "IGNORE";
-        if (
-            this.runtime.character?.templates?.shouldRespondWithImageTemplate ||
-            this.runtime.character?.templates
-                ?.twitterShouldRespondWithImageTemplate
-        ) {
-            const shouldRespondWithImageContext = composeContext({
-                state,
-                template:
-                    this.runtime.character.templates
-                        ?.twitterShouldRespondWithImageTemplate ||
-                    this.runtime.character?.templates
-                        ?.shouldRespondWithImageTemplate,
-            });
 
-            shouldRespondWithImage = await generateShouldRespond({
-                runtime: this.runtime,
-                context: shouldRespondWithImageContext,
-                modelClass: ModelClass.MEDIUM,
-            });
-        }
+        // const shouldRespondContext = composeContext({
+        //     state,
+        //     template:
+        //         this.runtime.character.templates
+        //             ?.twitterShouldRespondTemplate ||
+        //         this.runtime.character?.templates?.shouldRespondTemplate ||
+        //         twitterShouldRespondTemplate,
+        // });
+        // const shouldRespond = await generateShouldRespond({
+        //     runtime: this.runtime,
+        //     context: shouldRespondContext,
+        //     modelClass: ModelClass.MEDIUM,
+        // });
+        // let shouldRespondWithImage = "IGNORE";
+        // if (
+        //     this.runtime.character?.templates?.shouldRespondWithImageTemplate ||
+        //     this.runtime.character?.templates
+        //         ?.twitterShouldRespondWithImageTemplate
+        // ) {
+        //     const shouldRespondWithImageContext = composeContext({
+        //         state,
+        //         template:
+        //             this.runtime.character.templates
+        //                 ?.twitterShouldRespondWithImageTemplate ||
+        //             this.runtime.character?.templates
+        //                 ?.shouldRespondWithImageTemplate,
+        //     });
+
+        //     shouldRespondWithImage = await generateShouldRespond({
+        //         runtime: this.runtime,
+        //         context: shouldRespondWithImageContext,
+        //         modelClass: ModelClass.MEDIUM,
+        //     });
+        // }
 
         // const txHash = tweet.text.match(/0x[A-Fa-f0-9]{64}/)?.[0];
 
@@ -357,28 +369,31 @@ export class TwitterInteractionClient {
 
         // console.log("--- has burnt chibs === " + burnChibs);
 
-        console.log("----------shouldRespond-----------");
-        console.log(`----------${shouldRespond}-----------`);
-        console.log("----------shouldRespondWithImage-----------");
-        console.log(`----------${shouldRespondWithImage}-----------`);
+        // console.log("----------shouldRespond-----------");
+        // console.log(`----------${shouldRespond}-----------`);
+        // console.log("----------shouldRespondWithImage-----------");
+        // console.log(`----------${shouldRespondWithImage}-----------`);
+
+        console.log("----------respondType-----------");
+        console.log(respondType);
 
         if (
             this.client.profile.username.toLocaleLowerCase() ===
             process.env.ARTIST_TWITTER_USERNAME.toLocaleLowerCase()
         ) {
-            if (shouldRespondWithImage === "RESPOND") {
+            if (respondType === "TEXTANDIMAGE") {
                 const address = tweet.text.match(/0x[A-Fa-f0-9]{40}/)?.[0];
                 if (!address) {
                     // if generate image without address for an artist, do nothing
-                    return { text: "Response Decision:", action: "STOP" };;
+                    return { text: "Response Decision:", action: "STOP" };
                 }
             }
         }
 
         // Promise<"RESPOND" | "IGNORE" | "STOP" | null> {
-        if (shouldRespond !== "RESPOND") {
+        if (respondType !== "TEXT" && respondType !== "TEXTANDIMAGE") {
             elizaLogger.log("Not responding to message");
-            return { text: "Response Decision:", action: shouldRespond };
+            return { text: "Response Decision:", action: respondType };
         }
 
         if (tweet.username === process.env.PLATFORM_TWITTER_USERNAME) {
