@@ -3,7 +3,7 @@
     "scripts": {
         "preinstall": "npx only-allow pnpm",
         "build": "bash ./scripts/build.sh",
-        "start:all": "pnpm --filter \"@ai16z/agent\" start:all --isRoot",
+        "start:all": "pnpm start:service:artist && pnpm start:service:platform && pnpm start:service:chiblings",
         "start:service:artist": "pnpm --filter \"@ai16z/agent\" start:service:artist --isRoot",
         "start:service:platform": "pnpm --filter \"@ai16z/agent\" start:service:platform --isRoot",
         "start:service:chiblings": "pnpm --filter \"@ai16z/agent\" start:service:chiblings --isRoot",
