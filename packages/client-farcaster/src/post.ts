@@ -1,5 +1,6 @@
 import {
     composeContext,
+    elizaLogger,
     generateText,
     IAgentRuntime,
     ModelClass,
@@ -123,13 +124,18 @@ export class FarcasterPostManager {
 
             try {
                 // TODO: handle all the casts?
-                const { cast } = await sendCast({
+                const result = await sendCast({
                     client: this.client,
                     runtime: this.runtime,
                     roomId: generateRoomId,
                     content: { text: content },
                     profile,
                 });
+                if (!result) {
+                    elizaLogger.warn("Failed to fetch cast result");
+                    return;
+                }
+                const cast = result.cast;
 
                 const roomId = castUuid({
                     agentId: this.runtime.agentId,

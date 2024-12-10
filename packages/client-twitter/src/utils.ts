@@ -221,10 +221,11 @@ export async function sendTweet(
                 exatlyModelId: imageParams.exatlyModelId,
             });
 
-            const image = await generateImage(
+            const result = await generateImage(
                 imagePrompt,
                 imageParams.exatlyModelId
             );
+            const image = result.uri;
             imageResponse = image ? await fetch(image) : null;
             client.runtime.cacheManager.set(
                 "daily_image_count/" + twitterUsername,

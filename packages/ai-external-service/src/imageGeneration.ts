@@ -26,6 +26,10 @@ export const promptByGpt = async (prompt: string) => {
     return response?.choices?.[0]?.message?.content as string;
 };
 
+export enum GenerateError {
+    NoImage = "No image generated",
+}
+
 export const generateImage = async (prompt: string, modelId: string) => {
     const res = await fetch("https://api.stg.cyberconnect.dev/yume/", {
         method: "POST",
@@ -55,5 +59,9 @@ export const generateImage = async (prompt: string, modelId: string) => {
     console.log("🚀 ~ generateImage ~ data:", JSON.stringify(data));
     elizaLogger.log("🚀 ~ image generation prompt:", prompt);
     elizaLogger.log("🚀 ~ image generation modelId:", modelId);
-    return data?.data?.generateImage?.uri;
+    const resultUrl = data?.data?.generateImage?.uri as string | undefined;
+    return {
+        status: resultUrl ? ("success" as const) : ("failed" as const),
+        uri: resultUrl,
+    };
 };

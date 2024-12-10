@@ -110,14 +110,24 @@ export async function initializeClients(
     // }
 
     if (clientTypes.includes("twitter")) {
-        const twitterClients = await TwitterClientInterface.start(runtime);
-        clients.push(twitterClients);
+        try {
+            const twitterClients = await TwitterClientInterface.start(runtime);
+            clients.push(twitterClients);
+        } catch (e) {
+            elizaLogger.error("Error starting twitter client", e);
+            throw e;
+        }
     }
 
     if (clientTypes.includes("farcaster")) {
-        const farcasterClient = new FarcasterAgentClient(runtime);
-        farcasterClient.start();
-        clients.push(farcasterClient);
+        try {
+            const farcasterClient = new FarcasterAgentClient(runtime);
+            farcasterClient.start();
+            clients.push(farcasterClient);
+        } catch (e) {
+            elizaLogger.error("Error starting farcaster client", e);
+            throw e;
+        }
     }
 
     if (character.plugins?.length > 0) {

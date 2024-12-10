@@ -6,7 +6,6 @@ import {
     generateMessageResponse,
     generateObjectV2,
     generateShouldRespond,
-    generateText,
     Memory,
     ModelClass,
     stringToUuid,
@@ -78,6 +77,7 @@ export class FarcasterInteractionManager {
 
     private async handleInteractions() {
         const agentFid = Number(this.runtime.getSetting("FARCASTER_FID"));
+        elizaLogger.log("Farcaster: Handling interactions for ", agentFid);
 
         const casts = await this.client.getMentions({
             fid: agentFid,
@@ -116,12 +116,6 @@ export class FarcasterInteractionManager {
                 cast.author.display_name,
                 "farcaster"
             );
-
-            const thread = await buildConversationThread({
-                client: this.client,
-                runtime: this.runtime,
-                cast,
-            });
 
             const memory: Memory = {
                 content: { text: cast.text },
@@ -170,6 +164,23 @@ export class FarcasterInteractionManager {
             );
         }
 
+        const thread = await buildConversationThread({
+            client: this.client,
+            runtime: this.runtime,
+            cast,
+        });
+
+        const formattedConversation = thread
+            .map(
+                (cast) => `@${cast.author.display_name} (${cast.timestamp}):
+    ${cast.text}`
+            )
+            .join("\n\n");
+        elizaLogger.log(
+            "farcaster/formattedConversation:",
+            formattedConversation
+        );
+
         const currentPost = formatCast(cast);
 
         const { timeline } = await this.client.getTimeline({
@@ -199,6 +210,7 @@ export class FarcasterInteractionManager {
             currentPost,
             imageUrlInPost: imageUrl,
             aiArtistAddress: aiArtist?.address,
+            formattedConversation,
         });
 
         const memoryId = castUuid({
@@ -243,6 +255,7 @@ export class FarcasterInteractionManager {
                               memory: Memory;
                               cast: CastWithInteractions;
                           }
+                        | null
                         | undefined;
                     if (response.status === "SUCCESS") {
                         results = await sendCast({
@@ -261,7 +274,7 @@ export class FarcasterInteractionManager {
                                 ? [{ url: response.nftLinkFrame as string }]
                                 : undefined,
                         });
-                        elizaLogger.log("Cast sent", results.cast);
+                        elizaLogger.log("Cast sent", results?.cast);
                     } else {
                         results = await sendCast({
                             runtime: this.runtime,
@@ -276,7 +289,7 @@ export class FarcasterInteractionManager {
                                 parentHash: cast.hash,
                             },
                         });
-                        elizaLogger.log("Cast sent", results.cast);
+                        elizaLogger.log("Cast sent", results?.cast);
                     }
                     this.runtime.cacheManager.set(
                         `farcaster/nft_generation_${results?.cast.hash}`,
@@ -380,13 +393,20 @@ export class FarcasterInteractionManager {
         const address = await this.extractAddressFromPost(cast.text);
         if (shouldRespondWithImage === "RESPOND") {
             if (address) {
-                generatedImageUrl = await this.generateImage(
+                const result = await this.generateImage(
                     state.formattedConversation ?? cast.text
                 );
-                response.text += `
+                if (result.status === "failed") {
+                    response.text = `
+Failed to generate image. Please try again later.
+                    `;
+                } else {
+                    generatedImageUrl = result.uri;
+                    response.text += `
 @${this.runtime.getSetting("PLATFORM_AI_FARCASTER_NAME")} could you mint this image as an NFT?
 creatorAddress: ${address}
 `;
+                }
             } else {
                 response.text = `
 Missing Information!
@@ -419,7 +439,9 @@ Please update them and try again.
 
             const newState = await this.runtime.updateRecentMessageState(state);
 
-            await this.runtime.messageManager.createMemory(results.memory);
+            if (results) {
+                await this.runtime.messageManager.createMemory(results.memory);
+            }
 
             await this.runtime.evaluate(
                 memory,
@@ -431,18 +453,19 @@ Please update them and try again.
                 }
             );
 
-            await this.runtime.processActions(
-                memory,
-                [results.memory],
-                newState
-            );
+            if (results) {
+                await this.runtime.processActions(
+                    memory,
+                    [results.memory],
+                    newState
+                );
+                const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${results?.cast.hash} - ${results?.cast.author.username}: ${results?.cast.text}\nAgent's Output:\n${response.text}`;
 
-            const responseInfo = `Context:\n\n${context}\n\nSelected Post: ${results.cast.hash} - ${results.cast.author.username}: ${results.cast.text}\nAgent's Output:\n${response.text}`;
-
-            await this.runtime.cacheManager.set(
-                `farcaster/cast_generation_${results.cast.hash}.txt`,
-                responseInfo
-            );
+                await this.runtime.cacheManager.set(
+                    `farcaster/cast_generation_${results.cast.hash}.txt`,
+                    responseInfo
+                );
+            }
 
             await wait();
         } catch (error) {
@@ -461,12 +484,15 @@ Please update them and try again.
                   description
               )
             : await promptByGpt(description);
-        const imageUrl = await generateImage(
-            imagePrompt,
+
+        const modelId =
             this.runtime.character.exactlyModelId ||
-                this.runtime.getSetting("EXACTLY_MODEL_ID") ||
-                "c4c51742-fd8e-47df-95bc-da3ca5d895fc"
-        );
+            this.runtime.getSetting("EXACTLY_MODEL_ID");
+        if (!modelId) {
+            throw new Error("Exactly Model ID is not set");
+        }
+
+        const imageUrl = await generateImage(imagePrompt, modelId);
         return imageUrl;
     }
 

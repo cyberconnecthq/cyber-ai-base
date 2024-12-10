@@ -32,25 +32,32 @@ export class FarcasterClient {
             parentFid: number;
         },
         embeds?: Embed[]
-    ): Promise<CastWithInteractions> {
-        const result = await this.farcaster.publishCast({
-            signerUuid: this.runtime.getSetting("NEYNAR_SIGNER_UUID") as string,
-            text: cast,
-            parent: replyTo?.parentHash,
-            parentAuthorFid: replyTo?.parentFid,
-            embeds: embeds,
-        });
+    ): Promise<CastWithInteractions | null> {
+        try {
+            const result = await this.farcaster.publishCast({
+                signerUuid: this.runtime.getSetting(
+                    "NEYNAR_SIGNER_UUID"
+                ) as string,
+                text: cast,
+                parent: replyTo?.parentHash,
+                parentAuthorFid: replyTo?.parentFid,
+                embeds: embeds,
+            });
 
-        if (!result.success) {
-            throw new Error("Failed to submit message");
+            if (!result.success) {
+                throw new Error("Failed to submit message");
+            }
+            // TODO: maybe need to wait for the cast to be indexed
+
+            const detailedCast = await this.farcaster.fetchBulkCasts({
+                casts: [result.cast.hash],
+            });
+
+            return detailedCast.result.casts[0];
+        } catch (e) {
+            elizaLogger.error(`Failed to submit message. Error: ${e}`);
+            return null;
         }
-        // TODO: maybe need to wait for the cast to be indexed
-
-        const detailedCast = await this.farcaster.fetchBulkCasts({
-            casts: [result.cast.hash],
-        });
-
-        return detailedCast.result.casts[0];
     }
 
     // async loadCastFromMessage(message: CastAddMessage): Promise<Cast> {
