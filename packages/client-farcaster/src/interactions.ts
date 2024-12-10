@@ -211,6 +211,7 @@ export class FarcasterInteractionManager {
             imageUrlInPost: imageUrl,
             aiArtistAddress: aiArtist?.address,
             formattedConversation,
+            platform: "farcaster",
         });
 
         const memoryId = castUuid({

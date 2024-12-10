@@ -99,6 +99,7 @@ Please update them and try again.
             : false;
 
         const aiArtistAddress = _state.aiArtistAddress as string | undefined;
+        const platform = _state.platform || "twitter";
 
         if (!imageUrl) {
             elizaLogger.error(`did not get image url from the post`);
@@ -137,8 +138,12 @@ Update the details and try again.
             });
             if (result.nftId) {
                 const nftLinkFrame = `${process.env.YUME_FRAME_BASE_URL}/${result.nftId}`;
+                let textContent = `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!`;
+                if (platform === "twitter") {
+                    textContent += `${process.env.YUME_SITE_BASE_URL}/mint/${result.nftId}`;
+                }
                 return callback?.({
-                    text: `Congrats! Now anyone can mint your NFT via this link, and you’ll earn rewards from the minting fees!`,
+                    text: textContent,
                     type: "GENERATE_NFT",
                     status: "SUCCESS",
                     nftLinkFrame: nftLinkFrame,

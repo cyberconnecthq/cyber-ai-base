@@ -277,6 +277,7 @@ export class TwitterInteractionClient {
                 process.env.ARTIST_TWITTER_USERNAME.toLocaleLowerCase()
                     ? "0x796321ec356026FD4b3b3910dBAFBc434C252006"
                     : null,
+            platform: "twitter",
         });
         // console.log(state);
 
@@ -370,7 +371,7 @@ export class TwitterInteractionClient {
                 const address = tweet.text.match(/0x[A-Fa-f0-9]{40}/)?.[0];
                 if (!address) {
                     // if generate image without address for an artist, do nothing
-                    return { text: "Response Decision:", action: "STOP" };;
+                    return { text: "Response Decision:", action: "STOP" };
                 }
             }
         }
