@@ -483,7 +483,7 @@ export async function makeTagPlatformTweet({
         const template = `@${process.env.PLATFORM_TWITTER_USERNAME} please create a NFT for me. name:${content.object.name} desc:${content.object.description} creator address:${content.object.creatorAddress}`;
         const generatedText = await generateText({
             runtime: client.runtime,
-            context: `please shortern this text to meet the twitter's post tweet limit of 250 words, #IMPORTANT: just shorten the desc, the addresses MUST NOT be changed; no commentary or additional information should be included.
+            context: `please shortern this text to meet the twitter's post tweet limit of 250 characters, #IMPORTANT: just shorten the desc, the addresses MUST NOT be changed; no commentary or additional information should be included.
             ${template}`,
             modelClass: ModelClass.SMALL,
         });
